@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de lixiviación de oro v3</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1f2328;--mu:#6b7280;--bd:#e2e0d8;--ac:#b8860b;--ac2:#2563eb;--ok:#15803d;--rd:#dc2626}
+@media (prefers-color-scheme:dark){:root{--bg:#16181c;--card:#20242a;--tx:#e8e8e6;--mu:#9aa1ab;--bd:#343a42;--ac:#e0b341;--ac2:#60a5fa;--ok:#4ade80;--rd:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--tx)}
+header{padding:14px 22px;border-bottom:1px solid var(--bd)}
+h1{margin:0;font-size:20px}header p{margin:2px 0 0;color:var(--mu);font-size:13px}
+main{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px 22px;max-width:1300px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin:0 0 10px}
+.row{margin-bottom:11px}.row label{display:flex;justify-content:space-between;font-weight:500;margin-bottom:3px;align-items:center;gap:6px}
+.v{display:flex;gap:4px;align-items:center}
+input[type=number],select{padding:2px 4px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx)}
+.row input[type=number]{width:78px;text-align:right}select{max-width:170px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.u{color:var(--mu);font-size:12px;min-width:30px}
+.btns{display:flex;gap:8px}
+button{flex:1;padding:9px;border-radius:7px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-weight:600;cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.k{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 11px}
+.k b{display:block;font-size:18px;margin-top:1px}.k span{font-size:12px;color:var(--mu)}
+.k.big b{color:var(--ok);font-size:25px}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tabs button{flex:none;padding:6px 11px;font-weight:500;font-size:13px}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+canvas.c{width:100%;height:300px;display:block}
+.pn{display:none}.pn.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}td,th{padding:4px 8px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child{text-align:left}
+.note{font-size:12px;color:var(--mu);margin:6px 0}
+.eq{margin-top:10px;border:1px solid var(--bd);border-radius:8px;padding:8px 12px;background:var(--bg)}
+.eq summary{cursor:pointer;font-weight:600;font-size:13px}
+.eq div{font:12.5px/1.6 ui-monospace,Consolas,monospace;margin-top:4px;white-space:pre-wrap}
+.eq i{color:var(--mu);font-style:normal;font-family:system-ui;font-size:11.5px}
+textarea{width:100%;height:120px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:6px;font:12px monospace}
+#fit{font-size:12px;color:var(--ok);margin-top:6px}
+.mt{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 14px;font-size:13px;margin-top:8px}.mt span{color:var(--mu)}
+.bar{display:flex;height:22px;border-radius:5px;overflow:hidden;margin:6px 0;font-size:11px;color:#fff}.bar div{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.eqs{margin-top:14px;border:1px solid var(--bd);border-radius:12px;padding:4px 20px 12px;background:var(--card)}
+.eqs>summary{list-style:none;cursor:pointer;font:600 15px system-ui,sans-serif;padding:12px 0;display:flex;gap:10px;align-items:center}
+.eqs>summary::-webkit-details-marker{display:none}.eqs>summary::before{content:"–";color:var(--mu);font-weight:400}
+.eqs:not([open])>summary::before{content:"+"}
+.st{border-top:1px dashed var(--bd);padding:14px 0 8px;font-family:Georgia,'Times New Roman',serif}
+.st .lead,.ke .cap{color:var(--mu);font-size:15px;line-height:1.55;margin:0 0 4px}
+.ey{display:flex;justify-content:center;overflow-x:auto;padding:8px 2px}
+.en{color:var(--mu);font:15px Georgia,serif}
+.ke{border-left:4px solid var(--ac);background:var(--bg);padding:12px 18px 12px;margin:16px 0;border-radius:0 10px 10px 0;font-family:Georgia,'Times New Roman',serif}
+.ke .cap b{color:var(--tx)}
+.m{font:italic 1.4rem/1.7 'Cambria Math','STIX Two Math','Latin Modern Math','Times New Roman',serif;color:var(--tx);white-space:nowrap}
+.m .n,.m .tx{font-style:normal}.m .o{font-style:normal;padding:0 .22em}
+.m sub,.m sup{font-size:.68em;line-height:0;position:relative;vertical-align:baseline}.m sub{top:.3em;font-style:normal}.m sup{top:-.6em}
+.m .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em}
+.m .nu{border-bottom:1.5px solid currentColor;padding:0 .3em .06em}.m .de{padding:.06em .3em 0}
+.m .sq{white-space:nowrap}.m .rd{border-top:1.5px solid currentColor;padding:0 .1em}
+.m .ov{text-decoration:overline}
+.m sup .o,.m sub .o,.m .ss .o{padding:0 .06em}
+.m .ss{display:inline-flex;flex-direction:column;align-items:flex-start;vertical-align:.5em;font-size:.68em;line-height:.85;margin-left:.04em}.m .ss sup,.m .ss sub{position:static;display:block;font-size:1em;line-height:.85;vertical-align:baseline;font-style:normal}.m .ss sub{margin-top:0}
+.m .bg{font-style:normal;font-size:1.55em;font-weight:200;line-height:0;vertical-align:-.06em;margin:0 .04em}
+.m .sp2{display:inline-block;width:1.2em}
+.sec{display:flex;align-items:center;gap:10px;font:600 17px Georgia,'Times New Roman',serif;margin:26px 0 6px;padding-top:16px;border-top:1px dashed var(--bd)}
+.sec:first-child{border-top:0;margin-top:4px;padding-top:0}
+.sec span{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#fff;font:600 14px system-ui,sans-serif}
+.lead2{font:15px/1.6 Georgia,'Times New Roman',serif;color:var(--mu);margin:0 0 12px;max-width:900px}
+.sbox{text-align:center}.sbox canvas{max-width:100%}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;color:var(--mu);margin:4px 0}
+.lg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.rx{font:italic 13px Georgia,serif;color:var(--mu);margin-top:4px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.mc{border:1px solid var(--bd);border-radius:8px;padding:5px 9px;background:var(--bg)}.mc span{display:block;font-size:11.5px;color:var(--mu)}.mc b{font-size:15px}
+canvas.sm{height:210px}.bt button{padding:6px 4px;font-size:12.5px;font-weight:500}
+td i{color:var(--mu);font-style:normal;font-size:12px}
+.pcard{border:1px solid var(--bd);border-radius:12px;padding:12px;background:var(--bg)}
+.pcard canvas{width:100%;height:330px;display:block}
+.mg3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.mg3 div{border-top:1px solid var(--bd);padding-top:6px;font-size:12.5px;color:var(--mu)}.mg3 b{display:block;font-size:19px;color:var(--tx);margin-top:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}
+.cd{border:1px solid var(--bd);border-radius:10px;padding:10px 13px;background:var(--bg);font:14px/1.5 Georgia,'Times New Roman',serif;color:var(--mu)}
+.cd b{display:block;font:600 13px system-ui,sans-serif;color:var(--tx);margin-bottom:3px}
+.sb{height:8px;border-radius:4px;background:var(--ok);display:inline-block;vertical-align:middle;margin-right:6px}
+.train{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;margin:12px 0 8px}
+.tk,.fd{flex:1 1 100px;min-width:92px;border:1px solid var(--bd);border-radius:12px;padding:10px 5px 8px;background:var(--bg);text-align:center}
+.ar{align-self:center;color:var(--mu);font-size:18px;flex:0 0 auto;margin:0 -2px}
+.tk h4,.fd h4{margin:0;font:600 14px system-ui,sans-serif}
+.tank{width:58px;height:82px;margin:8px auto 4px;border:2px solid var(--mu);border-top:none;border-radius:0 0 14px 14px;position:relative;overflow:hidden;background:var(--card)}
+.tank .lv{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#f6dc7a,var(--ac));transition:height .12s}
+.tk .big{font:600 20px system-ui,sans-serif;color:var(--ok)}.tk small,.fd small{display:block;color:var(--mu);font-size:11.5px;line-height:1.5}
+.tk small b,.fd small b{color:var(--tx)}.wn{color:var(--rd)!important}
+.fd .big{font:600 20px system-ui,sans-serif;margin-top:6px}
+.pre{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--mu)}.pre button{flex:none;padding:5px 11px;font-weight:500;font-size:13px}
+.co{border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:0 10px 10px 0;background:var(--bg);padding:10px 14px;margin-top:10px;font:15px/1.6 Georgia,'Times New Roman',serif;color:var(--mu)}.co b{color:var(--tx)}
+.bb{height:30px;font-size:12.5px}
+.stp{display:flex;gap:10px;margin-bottom:9px;font:14px/1.5 Georgia,'Times New Roman',serif;color:var(--mu)}
+.stp i{flex:0 0 12px;height:12px;border-radius:50%;margin-top:5px}.stp b{display:block;font:600 13.5px system-ui,sans-serif;color:var(--tx)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(max-width:900px){.g4{grid-template-columns:1fr 1fr}}
+.mn{border:1px solid var(--bd);border-radius:10px;padding:6px 8px 8px;background:var(--bg)}.mn canvas{width:100%;height:150px;display:block}
+.mn p{font:13px/1.5 Georgia,'Times New Roman',serif;color:var(--mu);margin:6px 2px 0}.mn p b{color:var(--tx)}
+.mn.hl{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.pcard #cv3{width:100%;height:340px;display:block}
+.bt5 button{flex:none;padding:6px 11px;font-weight:500;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>Simulador de lixiviación de oro con cianuro · v3</h1>
+<p>Knelson previo + 4 reactores agitados en serie · Arrhenius (cap. 1) · interfaz sólido–líquido (cap. 3) · capa de producto (cap. 4) · capa límite (cap. 5) · aireación (cap. 6)</p></header>
+<main>
+<div>
+ <div class="card"><h2>Parámetros de operación</h2><div id="params"></div>
+  <div class="btns"><button class="p" id="run">▶ Ejecutar</button><button id="reset">↺ Reiniciar</button></div></div>
+ <div class="card"><h2>Concentración previa (Knelson)</h2><div id="conc"></div></div>
+ <div class="card"><h2>Aireación, agitación y partícula</h2><div id="adv"></div>
+  <div class="row"><label>Modelo de partícula<select id="mode" data-def="core"><option value="shrink">Esfera que se encoge (Au libre)</option><option value="core">Núcleo + capa de matriz</option></select></label></div>
+  <div class="row"><label><span>k<sub>s</sub> reacción superficial (25 °C)</span><span class="v"><input type="number" id="ks" data-def="0.0006" step="any"><span class="u">m/s</span></span></label></div>
+  <div class="row"><label><span>E<sub>a</sub> reacción superficial</span><span class="v"><input type="number" id="Eas" data-def="30" step="1"><span class="u">kJ/mol</span></span></label></div>
+  <div class="row"><label><span>D<sub>e</sub> difusión en matriz (25 °C)</span><span class="v"><input type="number" id="De" data-def="5e-10" step="any"><span class="u">m²/s</span></span></label></div>
+  <div class="row"><label><span>E<sub>a</sub> difusión en matriz</span><span class="v"><input type="number" id="Ead" data-def="20" step="1"><span class="u">kJ/mol</span></span></label></div>
+  <div class="row"><label>Au accesible (no refractario)<span class="v"><input type="number" id="xmax" data-def="96" step="1" min="1" max="100"><span class="u">%</span></span></label></div>
+ </div>
+</div>
+<div>
+ <div class="kpis">
+  <div class="k big"><span>Recuperación lixiviación</span><b id="kR">–</b></div>
+  <div class="k"><span>Recuperación global</span><b id="kG">–</b></div>
+  <div class="k"><span>Consumo NaCN</span><b id="kN">–</b></div>
+  <div class="k"><span>Consumo cal (CaO)</span><b id="kC">–</b></div>
+  <div class="k"><span>Au en solución</span><b id="kA">–</b></div>
+  <div class="k"><span>Etapa controlante (P80)</span><b id="kReg" style="font-size:14px">–</b></div>
+  <div class="k"><span>Capacidad implicada</span><b id="kQ">–</b></div>
+  <div class="k"><span>O₂ disuelto (tanque 1)</span><b id="kD">–</b></div>
+ </div>
+ <div class="card">
+  <div class="tabs"><button class="on" data-t="p1">Reactores en serie</button><button data-t="p2">Sólido esférico (cap. 3–4)</button><button data-t="p3">Interfaz sólido–líquido (cap. 3)</button><button data-t="p4">Capa límite (cap. 5)</button><button data-t="p5">Arrhenius (cap. 1)</button></div>
+
+  <div class="pn on" id="p1">
+   <div class="sec"><span>1</span>Así fluye la pulpa por tus 4 reactores</div>
+   <p class="lead2">Los relaves del Knelson entran al tanque 1, pasan por los tanques 2, 3 y 4 y salen como relave final. En cada tanque el cianuro y el oxígeno disuelven una parte del oro y lo que no se disolvió avanza al siguiente. El nivel dorado de cada tanque es el oro recuperado hasta ese punto. Pulsa «Ejecutar» para verlo avanzar.</p>
+   <div class="train" id="trn"></div>
+   <div class="pre"><span>Escenarios para probar:</span><span id="pre"></span></div><div class="note" id="prn"></div>
+   <div class="cards">
+    <div class="cd"><b>Reactor de mezcla completa</b>Cada tanque está tan bien agitado que la pulpa que sale tiene la misma composición que la del interior. Por eso en cada tanque el oro ve siempre las mismas condiciones.</div>
+    <div class="cd"><b>Tiempo de residencia τ</b>Es el tiempo medio que la pulpa pasa en un tanque: τ = V/Q. Con tus 30 m³ y el caudal de pulpa de la planta, cada tanque da el tiempo que ves en las tarjetas; el «tiempo de lixiviación» del panel es el de los cuatro juntos.</div>
+    <div class="cd"><b>Por qué en serie</b>En un solo tanque grande parte de la pulpa recién entrada sale casi de inmediato. En varios tanques en serie cada tanque recibe pulpa más «avanzada», y el conjunto se acerca al reactor ideal de tu ensayo de laboratorio.</div>
+   </div>
+
+   <div class="sec"><span>2</span>Recuperación a lo largo del tren</div>
+   <p class="lead2">Cada punto rojo es la salida de un tanque. La curva punteada es lo que lograría un reactor ideal sin mezcla (como tu ensayo batch de laboratorio): el tren de tanques queda siempre por debajo, porque parte de la pulpa sale antes de haber reaccionado lo suficiente. Los puntos azules son tus datos de calibración.</p>
+   <canvas class="c" id="cv1"></canvas>
+   <table id="tb1"></table><div class="note" id="n1a"></div>
+
+   <div class="sec"><span>3</span>¿Por qué varios tanques en serie y no uno grande?</div>
+   <p class="lead2">Con el mismo volumen total y el mismo tiempo de residencia, repartir la pulpa en más tanques mejora la recuperación, pero cada tanque adicional aporta menos que el anterior. La gráfica compara de 1 a 8 tanques frente al reactor ideal.</p>
+   <canvas class="c" id="cv1b"></canvas><div class="note" id="n1b"></div><div class="co" id="c3"></div>
+
+   <div class="sec"><span>4</span>El oxígeno en cada tanque (aireación, cap. 6)</div>
+   <p class="lead2">El oxígeno lo aportan las burbujas de aire y lo consumen el oro y los demás minerales que gastan reactivo. Cuanta más demanda hay, más baja queda la concentración de oxígeno disuelto. Como el O₂ suele ser el reactivo que limita (ver la pestaña Capa límite), conviene mantenerlo por encima de 6 mg/L.</p>
+   <canvas class="c" id="cv1c"></canvas><div class="mg3" id="mt1"></div><div class="note" id="n1c"></div>
+
+   <div class="sec"><span>5</span>Balance de oro del circuito</div>
+   <p class="lead2">Del oro que entra a la planta, una parte la recupera el Knelson, otra se disuelve en los tanques y el resto se va en el relave final.</p>
+   <div class="bar bb" id="bal"></div><div class="mg3" id="mb1"></div>
+   <div class="eqhost" data-k="p1"></div></div>
+
+  
+<div class="pn" id="p2">
+   <div class="sec"><span>1</span>La partícula de oro: núcleo sin reaccionar</div>
+   <p class="lead2">El grano de oro se disuelve de afuera hacia adentro. El cianuro y el oxígeno cruzan la película límite y, si existe una capa de matriz o de pasivación (sulfuros, óxidos de hierro, cal), también esa capa, hasta llegar al núcleo de oro sin disolver. Mueve α o elige un punto del tren de cuatro reactores.</p>
+   <div class="g2 sp">
+    <div class="sbox"><canvas id="sph"></canvas>
+     <div class="lg"><span><i style="background:var(--ac)"></i>Núcleo de oro sin disolver (r₁)</span><span><i style="background:var(--mu);opacity:.5"></i>Capa de matriz / pasivación (r₁→r₂)</span><span><i style="border:1.5px dashed var(--tx);background:none"></i>Superficie original (r₀)</span><span><i style="border:1.5px dashed var(--ac2);background:none"></i>Película límite (δ)</span></div>
+     <div class="rx">2Au + 4CN⁻ + O₂ + 2H₂O → 2Au(CN)₂⁻ + 2OH⁻ + H₂O₂</div></div>
+    <div>
+     <div class="row"><label>Fracción reaccionada α del oro<span class="v"><b id="alv">0.40</b></span></label><input type="range" id="al" min="0" max="0.99" step="0.01" value="0.4"></div>
+     <div class="row"><label>Relación de volúmenes Z de la capa<span class="v"><b id="zzv">1.00</b></span></label><input type="range" id="zz" min="0.6" max="2.5" step="0.05" value="1"></div>
+     <div class="btns bt"><button data-a="0">Alimentación</button><button data-a="1">Tanque 1</button><button data-a="2">Tanque 2</button><button data-a="3">Tanque 3</button><button data-a="4">Tanque 4</button></div>
+     <div class="mg" id="sm"></div>
+     <canvas class="c sm" id="cv2a"></canvas>
+     <div class="note">Perfil del reactivo (CN⁻ equivalente) a través de la capa, con control difusional (C = 0 en el núcleo): hiperbólico en la esfera, lineal en una placa plana. <span id="n2a"></span></div>
+    </div>
+   </div>
+
+   <div class="sec"><span>2</span>Comparación de modelos de difusión por la capa</div>
+   <p class="lead2">Los tres modelos se escriben como g(α) = K·t con la misma constante K, así que se comparan en un solo eje de tiempo adimensional τ = K·t. Jander supone capa delgada; Crank–Ginstling–Brounshtein (C–G–B) incluye el área decreciente; Crank–Carter–Valensi (C–C–V) añade el cambio de volumen Z de la capa (usa el Z de la sección 1).</p>
+   <div class="row" style="max-width:320px"><label>Vista<select id="cmpv"><option value="0">α contra τ = K·t</option><option value="1">g(α) / (α²/9)</option></select></label></div>
+   <canvas class="c" id="cv2b"></canvas><table id="tb2b"></table><div class="note" id="n2b"></div>
+
+   <div class="sec"><span>3</span>Importancia del tamaño de partícula</div>
+   <p class="lead2">Con control químico el tiempo crece con r₀; con difusión por la capa, con r₀². Por eso moler más fino ayuda mucho cuando el oro está cubierto por una matriz. A la izquierda, el tiempo para disolver el 90 % del grano; a la derecha, la recuperación que entregan los cuatro tanques para cada P80.</p>
+   <div class="g2"><canvas class="c" id="cv2c"></canvas><canvas class="c" id="cv2d"></canvas></div>
+   <table id="tb2"></table><div class="note" id="n2c"></div>
+   <div class="eqhost" data-k="p2"></div></div>
+
+  
+<div class="pn" id="p3">
+   <div class="sec"><span>1</span>El camino del cianuro hasta el oro</div>
+   <p class="lead2">Para disolver el oro, el cianuro y el oxígeno hacen un viaje de varias etapas en serie: cruzan la película que rodea al grano, la capa de matriz (si la hay) y reaccionan en la superficie del oro. Como en un circuito eléctrico, la concentración «cae» a lo largo del camino y la etapa con mayor resistencia es la que controla (§3.1.2). Mueve α para ver cómo cambia el reparto a medida que el grano se disuelve.</p>
+   <div class="g2 sp">
+    <div>
+     <div class="stp"><i style="background:var(--ac2)"></i><div><b>Película límite</b>El CN⁻ y el O₂ cruzan la película estancada que rodea al grano; allí solo avanzan por difusión (cap. 5).</div></div>
+     <div class="stp"><i style="background:var(--ok)"></i><div><b>Capa de matriz o de pasivación</b>Si el oro está cubierto por sulfuros, óxidos de hierro o cal, el reactivo debe difundir por los poros de esa capa (cap. 4).</div></div>
+     <div class="stp"><i style="background:var(--rd)"></i><div><b>Adsorción y reacción en la interfaz</b>En la superficie del oro el reactivo se adsorbe y ocurre la reacción electroquímica 2Au + 4CN⁻ + O₂ + 2H₂O → 2Au(CN)₂⁻ + 2OH⁻ + H₂O₂ (cap. 3).</div></div>
+     <div class="stp"><i style="background:var(--mu)"></i><div><b>Salida del producto</b>El Au(CN)₂⁻ sale por las mismas capas hacia la pulpa. En el simulador se supone que no limita, porque el complejo es muy soluble y se aleja rápido.</div></div>
+     <div class="row" style="margin-top:12px"><label>Fracción reaccionada α del oro<span class="v"><b id="al3v">0.50</b></span></label><input type="range" id="al3" min="0" max="0.99" step="0.01" value="0.5"></div>
+     <div class="btns bt3"><button data-a="0">Alimentación</button><button data-a="1">Tanque 1</button><button data-a="2">Tanque 2</button><button data-a="3">Tanque 3</button><button data-a="4">Tanque 4</button></div>
+    </div>
+    <div class="pcard"><canvas id="cv3"></canvas><div class="bar" id="rs"></div><div class="note" id="n3a"></div></div>
+   </div>
+
+   <div class="sec"><span>2</span>Cómo se ve cada etapa controlante</div>
+   <p class="lead2">Según dónde se pierda la concentración, el perfil cambia de forma (Fig. 3.5 a 3.10). Compara las tres situaciones ideales con tu proceso: la caída coloreada indica qué parte del recorrido consume la «fuerza impulsora».</p>
+   <div class="g4">
+    <div class="mn" id="mn1"><canvas id="cv3m1"></canvas><p><b>Control por reacción química.</b> Casi no hay caída en la película ni en la matriz; todo ocurre en la interfaz. Acelera la temperatura; agitar no.</p></div>
+    <div class="mn" id="mn2"><canvas id="cv3m2"></canvas><p><b>Control por la matriz.</b> La caída se concentra en la capa que cubre el oro. Ayuda moler más fino o romper la capa; agitar no.</p></div>
+    <div class="mn" id="mn3"><canvas id="cv3m3"></canvas><p><b>Control por la película.</b> El reactivo se consume apenas llega y la caída ocurre en la película. Ayudan la agitación y el O₂.</p></div>
+    <div class="mn" id="mn4"><canvas id="cv3m4"></canvas><p id="mn4t"></p></div>
+   </div>
+
+   <div class="sec"><span>3</span>Cómo cambia el control mientras se disuelve el oro</div>
+   <p class="lead2">El grano no tiene el mismo comportamiento de principio a fin: al disolverse se encoge, la capa de matriz (si existe) se hace más gruesa y el reparto de resistencias cambia. Por eso los últimos tanques aportan menos.</p>
+   <div class="g2"><canvas class="c" id="cv3b"></canvas><canvas class="c" id="cv3c"></canvas></div><div class="note" id="n3b"></div>
+
+   <div class="sec"><span>4</span>Cómo reconocer la etapa controlante</div>
+   <p class="lead2">El libro propone no decidir solo por la forma de la curva cinética: la película y la reacción química pueden dar la misma ley (§3.5.2). Para distinguirlas hay que mirar la energía de activación, el efecto de la agitación y el efecto del tamaño.</p>
+   <table id="tb3d"></table><div class="note" id="n3d"></div>
+
+   <div class="sec"><span>5</span>Tamaño y forma del grano (§3.3.3 y §3.4)</div>
+   <p class="lead2">La ecuación 3.20 solo vale si todos los granos tienen el mismo tamaño; con una distribución, la curva global tiene una cola lenta de granos gruesos. Además, la forma cambia la ley: un grano laminar se disuelve distinto que uno redondo.</p>
+   <div class="g2"><canvas class="c" id="cv3d"></canvas><canvas class="c" id="cv3e"></canvas></div><div class="note" id="n3e"></div>
+
+   <div class="sec"><span>6</span>Otras ideas del capítulo 3 para tu proceso</div>
+   <div class="cards">
+    <div class="cd"><b>Serie o paralelo</b>En etapas en serie controla la más lenta; en paralelo, la más rápida. Todas las etapas del grano de oro están en serie.</div>
+    <div class="cd"><b>Velocidad máxima virtual</b>La velocidad calculada suponiendo una sola etapa controlante es un máximo; la real es menor porque las demás etapas también oponen resistencia.</div>
+    <div class="cd"><b>Mirar el grano parcialmente lixiviado</b>Cortar y observar al microscopio granos a medio disolver (como la Fig. 3.2) muestra si hay núcleo y capa de producto: si los hay, la matriz influye.</div>
+    <div class="cd"><b>Dos mecanismos, misma ley</b>La película con diferencia de concentración constante y la reacción química dan la misma ecuación 3.15. Solo la energía de activación y la agitación las distinguen.</div>
+    <div class="cd"><b>Quimisorción (§3.6)</b>Especies que ocupan sitios de la superficie frenan la reacción: en otros sistemas lo hacen el oxígeno y el azufre. En el oro, sulfuros e hidróxidos de hierro pueden cumplir ese papel. No está incluida en el simulador.</div>
+    <div class="cd"><b>Reacción interna total (§3.7)</b>Si el sólido es muy poroso y el reactivo lo atraviesa, no hay núcleo y rige −ln(1 − α) = kt. No aplica al grano de oro denso, pero sí a minerales muy porosos.</div>
+   </div>
+   <div class="eqhost" data-k="p3"></div></div>
+
+  
+<div class="pn" id="p4">
+   <div class="sec"><span>1</span>La película límite: dónde está la resistencia</div>
+   <p class="lead2">En el capítulo 4 la resistencia estaba en una capa sólida. Aquí está en el líquido: una película estancada pegada al grano de oro, donde el cianuro y el oxígeno solo avanzan por difusión. <b>Agitar no cambia D; adelgaza la película.</b> Mueve la agitación, la temperatura y el cianuro, y observa cómo cambia el espesor δ.</p>
+   <div class="g2 sp">
+    <div>
+     <div class="row"><label>Agitación del tanque<span class="v"><b id="rp4v">52</b><span class="u">rpm</span></span></label><input type="range" id="rp4" min="38" max="170" step="1"></div>
+     <div class="row"><label>Temperatura<span class="v"><b id="T4v">25</b><span class="u">°C</span></span></label><input type="range" id="T4" min="5" max="60" step="1"></div>
+     <div class="row"><label>Cianuro (NaCN)<span class="v"><b id="cn4v">500</b><span class="u">ppm</span></span></label><input type="range" id="cn4" min="100" max="5000" step="50"></div>
+     <div class="note" id="rpn"></div>
+     <div class="note">Supuestos de la figura: la concentración en el seno es la del tanque 1 (CN⁻ libre y O₂ disuelto). El espesor efectivo δ se define, como en la Fig. 5.1, donde la tangente al perfil en la superficie corta la concentración del seno. Los controles están sincronizados con los parámetros del panel izquierdo.</div>
+    </div>
+    <div class="pcard"><canvas id="pf"></canvas>
+     <div class="lg"><span><i style="background:var(--ac2)"></i>Perfil de CN⁻</span><span><i style="background:var(--rd)"></i>Perfil de O₂</span><span><i style="background:#d97706"></i>Tangente en x = 0</span></div>
+     <div class="mg3" id="pm"></div></div>
+   </div>
+   <div class="cards">
+    <div class="cd"><b>Difusión molecular</b>Movida por el gradiente de concentración. Es lenta (D ≈ 10⁻⁵ cm²/s) y es el único mecanismo que actúa dentro de la película.</div>
+    <div class="cd"><b>Convección</b>El flujo de la pulpa arrastra el soluto. Depende de la velocidad del fluido alrededor del grano.</div>
+    <div class="cd"><b>Difusión turbulenta</b>Solo con flujo turbulento: remolinos que mezclan paquetes de fluido. En el seno supera a la difusión molecular; pegada al grano se anula.</div>
+    <div class="cd"><b>La agitación no aumenta D</b>D depende del soluto, del fluido y de la temperatura. La agitación adelgaza δ y por eso aumenta h<sub>m</sub> = D/δ.</div>
+    <div class="cd"><b>δ no es una película física</b>Es un espesor efectivo: la distancia sobre la que ocurre casi toda la caída de concentración. Solo hay perfil apreciable si la transferencia de masa controla.</div>
+    <div class="cd"><b>Unidades</b>D en cm²/s y h<sub>m</sub> en cm/s: h<sub>m</sub> sí tiene dimensiones de velocidad; D no.</div>
+   </div>
+
+   <div class="sec"><span>2</span>Efecto de la agitación sobre el espesor</div>
+   <p class="lead2">A mayor agitación la película se adelgaza, pero solo como una potencia baja de las rpm: duplicar la agitación no duplica h<sub>m</sub>. Además, los granos pequeños tienen una película más delgada (h<sub>m</sub> ∝ 1/d), por eso moler más fino también mejora la transferencia.</p>
+   <canvas class="c" id="cv4b"></canvas><div class="note" id="n4b"></div>
+
+   <div class="sec"><span>3</span>¿Qué manda: el cianuro o el oxígeno?</div>
+   <p class="lead2">El oro se disuelve cuando el CN⁻ y el O₂ llegan a su superficie. Según Elsner, el que llega más lento limita la velocidad. A bajo cianuro manda el CN⁻; a partir de una relación [CN⁻]/[O₂] ≈ 6 manda el oxígeno y agregar más cianuro ya no acelera la disolución.</p>
+   <canvas class="c" id="cv4d"></canvas><div class="note" id="n4d"></div>
+
+   <div class="sec"><span>4</span>Simulador: agitación, temperatura y etapa controlante</div>
+   <p class="lead2">La película (h<sub>m</sub>) y la reacción en la superficie (k<sub>s</sub>) actúan en serie, como resistencias. Busca la agitación a partir de la cual seguir agitando ya no sirve, y comprueba que desde ahí solo la temperatura acelera la disolución.</p>
+   <div class="g2"><div><canvas class="c" id="cv4c"></canvas></div><div><canvas class="c" id="cv4m"></canvas></div></div>
+   <div class="bar" id="shb"></div><div class="mg3" id="k4"></div>
+   <table id="tb4s"></table><div class="note" id="n4s"></div>
+
+   <div class="sec"><span>5</span>Números adimensionales del grano en la pulpa</div>
+   <p class="lead2">Agrupar las variables en números adimensionales permite estimar h<sub>m</sub> sin medir δ. Sherwood compara la transferencia total con la difusión pura (Sh = 2 sin agitación); Schmidt compara el transporte de cantidad de movimiento con el de masa.</p>
+   <table id="tb4n"></table><div class="note" id="n4n"></div>
+   <div class="eqhost" data-k="p4"></div></div>
+
+  
+<div class="pn" id="p5">
+   <div class="sec"><span>1</span>La barrera de energía: por qué la temperatura acelera la disolución</div>
+   <p class="lead2">Que el oro pueda disolverse en cianuro (ΔG &lt; 0) no dice qué tan rápido lo hará: para reaccionar hay que cruzar una barrera de energía, la energía de activación E. Solo una pequeña fracción de las moléculas tiene energía suficiente en cada instante. Al calentar, esa fracción crece, y crece mucho más cuando la barrera es alta. Elige una etapa de tu proceso o mueve E libremente.</p>
+   <div class="row" style="max-width:520px"><label>Energía de activación E<span class="v"><b id="ea5v">25</b><span class="u">kJ/mol</span></span></label><input type="range" id="ea5" min="5" max="120" step="1" value="25"></div>
+   <div class="btns bt5" id="bt5"></div>
+   <div class="g2" style="margin-top:10px"><canvas class="c" id="cv5a"></canvas><canvas class="c" id="cv5b"></canvas></div>
+   <div class="mg3" id="m5a"></div><div class="note" id="n5a"></div>
+
+   <div class="sec"><span>2</span>La ley de Arrhenius en tus etapas</div>
+   <p class="lead2">La constante de velocidad crece exponencialmente con la temperatura: k = A·e<sup>−E/RT</sup>. Por eso, al graficar ln k contra 1/T, cada etapa debería ser una recta cuya pendiente es −E/R. A la izquierda se ve cuánto se acelera cada etapa respecto a tu temperatura actual; a la derecha, la gráfica de Arrhenius.</p>
+   <div class="g2"><canvas class="c" id="cv5c"></canvas><canvas class="c" id="cv5d"></canvas></div>
+   <table id="tb5"></table><div class="note" id="n5b"></div>
+
+   <div class="sec"><span>3</span>Qué etapa controla a cada temperatura</div>
+   <p class="lead2">Las etapas de tu grano de oro actúan en serie (película, matriz y reacción). Cada una responde distinto a la temperatura, así que el reparto del control cambia: al subir la temperatura gana peso la etapa de menor energía de activación, que es la que menos se acelera (capítulo 6.4).</p>
+   <canvas class="c" id="cv5e"></canvas><div class="note" id="n5c"></div>
+
+   <div class="sec"><span>4</span>Temperatura y oxígeno en tu planta</div>
+   <p class="lead2">Calentar acelera la química, pero también reduce el oxígeno que se disuelve en la pulpa, y el oxígeno es el reactivo que suele limitar. La curva dorada es la que verías en la planta; la azul, la que habría si el O₂ no cambiara. Abajo, el efecto de las variaciones de temperatura durante el día.</p>
+   <canvas class="c" id="cv5f"></canvas><div class="note" id="n5d"></div>
+   <div class="row" style="max-width:520px"><label>Variación diaria de la temperatura de la pulpa<span class="v"><b id="fl5v">5</b><span class="u">± °C</span></span></label><input type="range" id="fl5" min="0" max="12" step="1" value="5"></div><div class="co" id="n5f"></div>
+
+   <div class="sec"><span>5</span>Calcula la energía de activación con tus ensayos</div>
+   <p class="lead2">Si haces ensayos de lixiviación a distintas temperaturas, pega aquí «temperatura (°C), k» (k puede ser cualquier medida proporcional a la velocidad: una constante, 1/t₉₀, % por hora…). El simulador ajusta la recta de Arrhenius, calcula E y te dice a qué etapa se parece. Los datos precargados son un ejemplo.</p>
+   <div class="g2"><div><textarea id="arr_data"></textarea><div class="row" style="margin-top:8px"><label>Predecir k a la temperatura<span class="v"><input type="number" id="arr_T" value="30" step="1" style="width:70px"><span class="u">°C</span></span></label></div><div class="btns"><button class="p" id="arr_b">Ajustar</button></div></div><canvas class="c" id="cv5g"></canvas></div>
+   <div class="mg3" id="m5e"></div><div class="note" id="n5e"></div>
+
+   <div class="sec"><span>6</span>¿Cuánto hay que subir la temperatura?</div>
+   <p class="lead2">Cada celda indica cuánto se acelera una reacción al subir 10 °C y cuántos grados hay que subir para duplicar su velocidad (Tabla 1.1 del libro, en las unidades de tu proceso). Con barreras bajas, como las de difusión, casi no vale la pena calentar.</p>
+   <table id="tb5t"></table><div class="note" id="n5t"></div>
+
+   <div class="sec"><span>7</span>Ideas del capítulo 1 para tu proceso</div>
+   <div class="cards">
+    <div class="cd"><b>Termodinámica y cinética</b>La termodinámica dice si la disolución es posible; la cinética dice cuánto tarda. El tiempo es la variable más importante en cinética.</div>
+    <div class="cd"><b>Los activadores bajan la barrera</b>Un catalizador no cambia el equilibrio, solo reduce E (línea punteada verde de la sección 1). En cianuración se usan activadores como las sales de plomo.</div>
+    <div class="cd"><b>Alta E, alta sensibilidad</b>Las reacciones con E alta son muy sensibles a la temperatura; las de E baja (difusión) casi no. La sensibilidad es mayor a baja temperatura.</div>
+    <div class="cd"><b>El factor A casi no importa</b>El factor preexponencial apenas influye en la sensibilidad a la temperatura: lo que manda es E (Ec. 1.6).</div>
+    <div class="cd"><b>Cuando la recta se dobla</b>Si ln k contra 1/T no es recta, cambió la etapa que controla (reacciones anti-Arrhenius, Fig. 1.5). La curva «efectiva» de tu proceso se dobla por eso.</div>
+    <div class="cd"><b>E es un parámetro experimental</b>Se mide en kJ/mol y no depende de cómo escribas la estequiometría. Un cambio de E con la temperatura indica un cambio de mecanismo.</div>
+   </div>
+   <div class="eqhost" data-k="p5"></div></div>
+ </div>
+ <div class="card"><details><summary style="cursor:pointer;font-weight:600">Calibración con ensayo batch de laboratorio</summary>
+  <p class="note">Pega «tiempo(h), recuperación(%)» medidos a las condiciones de referencia. Ajusta k<sub>s</sub> y el Au accesible con el modelo completo. Datos precargados: <b>de ejemplo</b>.</p>
+  <div class="g2"><textarea id="data"></textarea><div id="ref"></div></div>
+  <div class="btns" style="margin-top:8px"><button class="p" id="fitb">Ajustar modelo</button></div><div id="fit"></div></details>
+  <div class="note">Supuestos: [CN⁻] libre constante; DO por tanque (OUR decreciente 100/75/55/40 %); partículas segregadas, 8 clases de tamaño lognormales (base másica); solución sin consumo de CN por el oro.</div></div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const P=[['cn','Cianuro (NaCN)',100,5000,50,500,'ppm'],['ph','pH',8,12.5,.1,10.5,''],['d','Tamaño de partícula P80',20,300,5,75,'µm'],['t','Tiempo de residencia total (4 tanques)',4,72,.1,30.8,'h'],['T','Temperatura',5,60,1,25,'°C'],['s','Sólidos en pulpa',10,60,1,40,'%']];
+const C=[['feed','Ley de cabeza',1,20,.5,8,'g/t'],['rc','Recuperación gravimétrica',10,90,1,40,'%'],['mp','Pull másico al concentrado',.05,5,.05,.1,'%']];
+const A=[['air','Aire por tanque',.05,1,.05,.2,'m³/min'],['our','Demanda de O₂ (tanque 1)',0,10,.5,3,'mg/L·h'],['alt','Altitud',0,4000,100,0,'m'],['eps','Agitación ε',.05,5,.01,.14,'W/kg'],['sg','Dispersión de tamaño σ',.1,1,.05,.5,'']];
+const R0=[['cn',500,'CN ref (ppm)'],['ph',10.5,'pH ref'],['d',75,'P80 ref (µm)'],['T',25,'T ref (°C)'],['s',40,'Sólidos ref (%)'],['do',8,'O₂ ref (mg/L)'],['cons',.7,'NaCN base (kg/t)']];
+const V={};let prev=null,anim=null,pts=[],RES=null;
+function mk(list,box){list.forEach(([id,n,mi,ma,st,df,u])=>{const r=document.createElement('div');r.className='row';
+ r.innerHTML=`<label>${n}<span class="v"><input type="number" id="n_${id}" min="${mi}" max="${ma}" step="${st}"><span class="u">${u}</span></span></label><input type="range" id="r_${id}" min="${mi}" max="${ma}" step="${st}">`;
+ $(box).appendChild(r);const nu=$('n_'+id),ra=$('r_'+id);
+ const set=v=>{v=Math.min(ma,Math.max(mi,+v));V[id]=v;nu.value=v;ra.value=v};
+ nu.oninput=()=>{set(nu.value);live()};ra.oninput=()=>{set(ra.value);live()};set(df);r.reset=()=>set(df)})}
+mk(P,'params');mk(C,'conc');mk(A,'adv');
+$('ref').innerHTML=R0.map(([i,v,l])=>`<div class="row"><label>${l}<input type="number" id="f_${i}" value="${v}" step="any" style="width:70px"></label></div>`).join('');
+$('arr_data').value="15, 0.083\n25, 0.120\n35, 0.168\n45, 0.247";
+$('data').value="0,0\n2,12\n4,24\n8,42\n12,56\n16,66\n24,80\n36,90\n48,94";
+document.querySelectorAll('[data-def]').forEach(e=>{e.value=e.dataset.def;e.oninput=e.onchange=live});
+
+// ---------- física ----------
+const Rg=8.314,rhoB=19300/0.19697,bst=.5;
+const ALL={f:1,r:1,a:1};
+const frac=ph=>{let f=1/(1+Math.pow(10,9.4-ph));if(ph>11.5)f*=Math.max(.5,1-.12*(ph-11.5));return f};
+const muw=TK=>2.414e-5*Math.pow(10,247.8/(TK-140));
+function getX(){return{eps:V.eps,sg:V.sg,air:V.air,our:V.our,alt:V.alt,ks:+$('ks').value,Eas:+$('Eas').value*1e3,De:+$('De').value,Ead:+$('Ead').value*1e3,mode:$('mode').value,xmax:Math.min(1,Math.max(.01,+$('xmax').value/100))}}
+function env(v,X,o2){
+ const TK=v.T+273.15,mu=muw(TK),nu=mu/997,f=muw(298.15)/mu*TK/298.15;
+ const phi=(v.s/2.7)/(v.s/2.7+100-v.s),fmu=Math.pow(Math.max(.05,1-phi/.62),-1.55);
+ const arr=Ea=>Math.exp(-Ea/Rg*(1/TK-1/298.15));
+ return{DCN:1.83e-9*f,DO2:2.76e-9*f,nu,nuE:nu*fmu,cn:v.cn/49.01*frac(v.ph),o2:Math.max(0,o2),
+  ks:X.ks*arr(X.Eas)*(v.ph>11.5?Math.max(.5,1-.12*(v.ph-11.5)):1),De:X.De*arr(X.Ead),eps:X.eps}}
+function sh(d,e,D){return 2+.52*Math.pow(Math.pow(e.eps,1/3)*Math.pow(d,4/3)/e.nuE,.52)*Math.pow(e.nu/D,1/3)}
+function film(R,e){const d=2*Math.max(R,1e-8),kc=sh(d,e,e.DCN)*e.DCN/d,ko=sh(d,e,e.DO2)*e.DO2/d,a=kc*e.cn,b=ko*e.o2;
+ const Ja=(a+4*b)>0?2*a*b/(a+4*b):0;return{kc,ko,sc:sh(d,e,e.DCN),Ja,Ce:kc>0?2*Ja/kc:0}}
+function parts(rc,R,e,X){const core=X.mode==='core',Rf=core?R:rc,fi=film(Rf,e);
+ return{fi,Sf:rc*rc/(Rf*Rf)/fi.kc,Sa:core?Math.max(rc*(1-rc/R),1e-4*R)/e.De:0,Sr:1/e.ks}}
+function drc(rc,R,e,X,fl){const core=X.mode==='core',Rf=core?R:rc,fi=film(Rf,e);
+ const S=(fl.f?rc*rc/(Rf*Rf)/fi.kc:0)+(fl.a&&core?Math.max(rc*(1-rc/R),1e-4*R)/e.De:0)+(fl.r?1/e.ks:0);
+ return S>0&&fi.Ce>0?bst*fi.Ce/(rhoB*S):0}
+function simClass(d0,e,X,fl,N,T){const R=d0/2,dt=T*3600/N,x=new Float32Array(N+1),r=new Float32Array(N+1);let rc=R;r[0]=1;
+ for(let i=1;i<=N;i++){let tl=dt,g=0;
+  while(tl>1e-9&&rc>1e-9&&g++<3000){const v=drc(rc,R,e,X,fl);if(v<=0)break;const lim=Math.min(.01*R,.1*(R-rc)+1e-4*R),h=Math.min(tl,lim/v);rc=Math.max(0,rc-v*h);tl-=h}
+  x[i]=1-Math.pow(rc/R,3);r[i]=rc/R}return{x,r}}
+const Z=[-1.534,-.887,-.489,-.157,.157,.489,.887,1.534],cls=(v,X)=>Z.map(z=>v.d*1e-6*Math.exp(X.sg*(z-.8416)));
+function runSet(v,X,e,fl,N,T){const cl=cls(v,X).map(d=>simClass(d,e,X,fl,N,T)),x=new Float32Array(N+1);cl.forEach(c=>{for(let i=0;i<=N;i++)x[i]+=c.x[i]/Z.length});return{x,cl}}
+const tAt=(x,N,T,f)=>{for(let i=1;i<=N;i++)if(x[i]>=f)return(i-1+(f-x[i-1])/(x[i]-x[i-1]))*T/N;return null};
+// tanques CSTR en serie con partículas segregadas (balance de poblaciones, malla de estados)
+function cstr(d0,X,ej,tau,M){const R=d0/2,h=1/M;let p=new Float64Array(M+1);p[0]=1;const out=[];
+ for(const e of ej){const vl=new Float64Array(M+1);
+  for(let i=0;i<M;i++){const x=i/M,rc=R*Math.pow(1-x,1/3);vl[i]=3*Math.pow(1-x,2/3)/R*drc(rc,R,e,X,ALL)*3600}
+  const q=new Float64Array(M+1);let m=0;
+  for(let i=0;i<=M;i++){q[i]=(p[i]/tau+(i?vl[i-1]/h*q[i-1]:0))/(vl[i]/h+1/tau);m+=q[i]*i/M}
+  p=q;out.push(m)}return out}
+// aireación (cap. 6)
+const CSAT=[14.62,12.77,11.29,10.08,9.09,8.26,7.56,6.95,6.41,5.93,5.50,5.10,4.72];
+const csat=T=>{const u=Math.min(60,Math.max(0,T))/5,i=Math.min(11,Math.floor(u));return CSAT[i]+(CSAT[i+1]-CSAT[i])*(u-i)};
+function aer(v,X){const TK=v.T+273.15,nu=muw(TK)/997,D=2.76e-9*muw(298.15)/muw(TK)*TK/298.15,de=3e-3,U=.72*Math.sqrt(9.81*de);
+ const Re=U*de/nu,Sc=nu/D,KL=D/de*(2+.55*Math.sqrt(Re)*Math.sqrt(Sc)),a=3*(X.air/60)*(3.5/U)/(de/2)/30;
+ const Cs=csat(v.T)*Math.exp(-X.alt/8434);return{KL,kla:KL*a*3600,a,U,Cs}}
+function setup(v){const X=getX(),ae=aer(v,X);
+ const ej=[1,.75,.55,.4].map(f=>{const DO=Math.max(.2,ae.Cs-X.our*f/ae.kla);return{DO,e:env(v,X,DO/32)}});return{X,ae,ej}}
+function cons(v,Rl,au){const g=i=>+$('f_'+i).value,tf=1+.02*(v.T-g('T')),vol=(1+3*(1-frac(v.ph)))/(1+3*(1-frac(g('ph'))));
+ return{nacn:g('cons')*Math.pow(v.cn/g('cn'),.6)*Math.sqrt(v.t/30.8)*tf*vol+au*.497/1000,cao:Math.max(0,(v.ph-9)*.667)}}
+function compute(v){
+ const{X,ae,ej}=setup(v),tau=v.t/4,N=300,o={v,X,ae,ej,tau,N};
+ const xs=[0,0,0,0];cls(v,X).forEach(d=>cstr(d,X,ej.map(t=>t.e),tau,80).forEach((x,j)=>xs[j]+=x/Z.length));
+ o.xs=xs;o.rec=xs.map(x=>x*X.xmax*100);
+ o.t=Array.from({length:N+1},(_,i)=>i*v.t/N);o.batch=runSet(v,X,ej[0].e,ALL,N,v.t);o.brec=Array.from(o.batch.x,x=>x*X.xmax*100);
+ const ff=[1,.75,.55,.4,.4,.4,.4,.4];o.nt=[];
+ for(let n=1;n<=8;n++){const ejn=ff.slice(0,n).map(k=>env(v,X,Math.max(.2,ae.Cs-X.our*k/ae.kla)/32));let m=0;cls(v,X).forEach(d=>{m+=cstr(d,X,ejn,v.t/n,80)[n-1]/Z.length});o.nt.push(m*X.xmax*100)}
+ {let m=0;cls(v,X).forEach(d=>{m+=cstr(d,X,ej.slice(0,3).map(t=>t.e),tau,80)[2]/Z.length});o.rec3=m*X.xmax*100}
+ const volT=1/2.7+(100-v.s)/v.s;o.cap=120/(v.t*volT)*24;
+ o.tail=V.feed*(1-V.rc/100)/(1-V.mp/100);o.auFeed=o.cap*o.tail;
+ const Rl=o.rec[3];o.au=o.auFeed*Rl/100;o.cn=cons(v,Rl,o.au/o.cap);o.glob=V.rc+(100-V.rc)*Rl/100;
+ // partícula P80 aislada (cap. 3-4)
+ const e1=ej[0].e,d=v.d*1e-6,Th=v.t,Nn=400;o.e1=e1;o.sp=simClass(d,e1,X,ALL,Nn,Th);o.Nn=Nn;
+ const fl={f:{f:1,r:0,a:0},r:{f:0,r:1,a:0},a:{f:0,r:0,a:1}};o.fl=fl;
+ o.s1={};for(const k in fl)o.s1[k]=simClass(d,e1,X,fl[k],Nn,Th);
+ o.t90={};const t90=(dd,f)=>t90of(dd,e1,X,f);
+ o.nexp={};const lst=[['f','Película'],['r','Reacción superficial']];if(X.mode==='core')lst.push(['a','Difusión en matriz']);lst.push(['all','Combinado']);
+ lst.forEach(([k,nm])=>{const f=k==='all'?ALL:fl[k],a=t90(d,f),b=t90(d/2,f);o.t90[nm]=a;o.nexp[nm]=a&&b?Math.log2(a/b):null});
+ o.lst=lst;return o}
+
+// ---------- gráficos ----------
+const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function plot(cv,o){const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;const dpr=devicePixelRatio||1;
+ cv.width=W*dpr;cv.height=H*dpr;const cx=cv.getContext('2d');cx.setTransform(dpr,0,0,dpr,0,0);
+ const m={l:48,r:12,t:14,b:36},w=W-m.l-m.r,h=H-m.t-m.b,x0=o.xmin||0,xM=o.xmax,y0=o.ymin||0,yM=o.ymax,up=o.upto==null?xM:o.upto;
+ const X=x=>m.l+(x-x0)/(xM-x0)*w,Y=y=>m.t+h-(Math.min(yM,Math.max(y0,y))-y0)/(yM-y0)*h,dg=r=>r<5?2:r<50?1:0;
+ cx.font='11px system-ui';cx.lineWidth=1;cx.strokeStyle=col('--bd');cx.fillStyle=col('--mu');
+ for(let i=0;i<=5;i++){const y=y0+(yM-y0)*i/5;cx.beginPath();cx.moveTo(m.l,Y(y));cx.lineTo(W-m.r,Y(y));cx.stroke();cx.textAlign='right';cx.fillText(y.toFixed(dg(yM-y0)),m.l-5,Y(y)+4)}
+ const nxt=o.xint?Math.round(xM-x0):6;if(o.xticks)o.xticks.forEach(x=>{cx.textAlign='center';cx.fillText(String(x),X(x),H-m.b+15)});else for(let i=0;i<=nxt;i++){const x=x0+(xM-x0)*i/nxt;cx.textAlign='center';cx.fillText(o.xint?String(Math.round(x)):x.toFixed(dg(xM-x0)),X(x),H-m.b+15)}
+ cx.fillText(o.xl,m.l+w/2,H-4);cx.save();cx.translate(11,m.t+h/2);cx.rotate(-Math.PI/2);cx.fillText(o.yl,0,0);cx.restore();
+ o.s.forEach(s=>{cx.beginPath();cx.setLineDash(s.dash?[6,4]:[]);cx.strokeStyle=s.c;cx.lineWidth=s.w||2.4;cx.globalAlpha=s.a||1;let st=false;
+  for(let i=0;i<s.x.length;i++){if(s.x[i]>up+1e-9||(s.clip&&s.y[i]>yM))break;st?cx.lineTo(X(s.x[i]),Y(s.y[i])):cx.moveTo(X(s.x[i]),Y(s.y[i]));st=true}cx.stroke()});
+ cx.setLineDash([]);cx.globalAlpha=1;
+ (o.pts||[]).forEach(p=>{if(p[0]>up+1e-9)return;cx.beginPath();cx.fillStyle=p[2]||col('--ac2');cx.arc(X(p[0]),Y(p[1]),p[3]||3.5,0,7);cx.fill()});
+ const ls=o.s.filter(s=>s.n);if(ls.length){const lx0=o.legL?m.l+6:W-m.r-158-Math.max(0,Math.max(...ls.map(q=>q.n.length))-22)*5.2;cx.globalAlpha=.88;cx.fillStyle=col('--card');cx.fillRect(lx0,o.legBR?m.t+h-ls.length*15-8:m.t+1,156+Math.max(0,Math.max(...ls.map(q=>q.n.length))-22)*5.2,ls.length*15+6);cx.globalAlpha=1}
+ let ly=o.legBR?m.t+h-ls.length*15+6:m.t+10;ls.forEach(s=>{cx.strokeStyle=s.c;cx.setLineDash(s.dash?[6,4]:[]);cx.lineWidth=2.4;cx.beginPath();const lx=o.legL?m.l+12:W-m.r-150-Math.max(0,Math.max(...ls.map(q=>q.n.length))-22)*5.2;cx.moveTo(lx,ly-3);cx.lineTo(lx+20,ly-3);cx.stroke();cx.setLineDash([]);cx.fillStyle=col('--tx');cx.textAlign='left';cx.fillText(s.n,lx+25,ly);ly+=15})}
+const tm=t=>t==null?'>300':t.toFixed(1);
+function gb(k){let a=0,b=1;for(let i=0;i<40;i++){const m=(a+b)/2;(1-2*m/3-Math.pow(1-m,2/3)<k?a=m:b=m)}return a}
+// ---------- pestaña 2: esfera de oro, modelos de difusión y efecto del tamaño ----------
+let TAB='p1',SZ=null,SZk='';
+const gJ=a=>Math.pow(1-Math.pow(1-a,1/3),2),gG=a=>1-2*a/3-Math.pow(1-a,2/3);
+const gC=(a,Z)=>Math.abs(Z-1)<1e-4?gG(a):(Math.pow(1+(Z-1)*a,2/3)+(Z-1)*Math.pow(1-a,2/3)-Z)/(1-Z);
+function t90of(d,e,X,f){const a=tAt(simClass(d,e,X,f,800,300).x,800,300,.9);if(a==null)return null;const T2=a*2;const b=tAt(simClass(d,e,X,f,800,T2).x,800,T2,.9);return b==null?a:b}
+function drawSphere(a,Z,dl,Rm){const c=$('sph'),S=360,dpr=devicePixelRatio||1;c.width=S*dpr;c.height=S*dpr;c.style.width=S+'px';c.style.height='auto';
+ const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,S,S);
+ const cx=S/2,cy=S/2+2,r0=82,r1=r0*Math.pow(1-a,1/3),r2=r0*Math.pow(Z+(1-Z)*(1-a),1/3),dp=Math.min(30,Math.max(9,dl/Rm*r0));
+ const circ=(r,fill,al,st,dash)=>{x.beginPath();x.arc(cx,cy,Math.max(r,.1),0,7);if(fill){x.globalAlpha=al;x.fillStyle=fill;x.fill();x.globalAlpha=1}if(st){x.setLineDash(dash||[]);x.strokeStyle=st;x.lineWidth=1.6;x.stroke();x.setLineDash([])}};
+ circ(r2+dp,col('--ac2'),.13,col('--ac2'),[5,4]);circ(r2,col('--mu'),.38,col('--mu'));
+ if(Math.abs(r2-r0)>1.5)circ(r0,null,0,col('--tx'),[3,4]);
+ if(r1>1){const g=x.createRadialGradient(cx-r1*.3,cy-r1*.3,r1*.1,cx,cy,r1);g.addColorStop(0,'#f6dc7a');g.addColorStop(1,col('--ac'));circ(r1,g,1,col('--ac'))}
+ const arrow=(ang,ra,rb,c,txt)=>{const ux=Math.cos(ang),uy=Math.sin(ang),x1=cx+ux*ra,y1=cy+uy*ra,x2=cx+ux*rb,y2=cy+uy*rb,ha=Math.atan2(y2-y1,x2-x1),h=8;
+  x.strokeStyle=c;x.fillStyle=c;x.lineWidth=2;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
+  x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-h*Math.cos(ha-.4),y2-h*Math.sin(ha-.4));x.lineTo(x2-h*Math.cos(ha+.4),y2-h*Math.sin(ha+.4));x.closePath();x.fill();
+  x.font='600 12px system-ui';const out=ra>rb?x1:x2,oy=ra>rb?y1:y2;x.textAlign=ux<0?'right':'left';x.fillText(txt,out+(ux<0?-4:4),oy+(uy<0?-4:12))};
+ const ro=r2+dp;arrow(-3*Math.PI/4,ro+36,ro+5,col('--ac2'),'CN⁻ + O₂');arrow(-Math.PI/4,ro+5,ro+36,col('--ok'),'Au(CN)₂⁻')}
+function sizeStudy(o){const rest={...V};delete rest.d;const key=JSON.stringify([rest,getX(),$('f_cons').value]);if(SZ&&key===SZk)return SZ;
+ const X=o.X,v=o.v,e=o.e1,ds=[];for(let d=20;d<=300;d+=20)ds.push(d);
+ const regs=[['Película',{f:1,r:0,a:0}],['Reacción',{f:0,r:1,a:0}]];if(X.mode==='core')regs.push(['Matriz',{f:0,r:0,a:1}]);regs.push(['Combinado',ALL]);
+ const t={};regs.forEach(([n,f])=>t[n]=ds.map(d=>{const q=t90of(d*1e-6,e,X,f);return q==null?1e9:q}));
+ const rec=ds.map(d=>{let m=0;cls({...v,d},X).forEach(dd=>{m+=cstr(dd,X,o.ej.map(q=>q.e),o.tau,60)[3]/Z.length});return m*X.xmax*100});
+ SZ={ds,t,rec,regs};SZk=key;return SZ}
+function renderP2(o,f,aI){
+ const v=o.v,e=o.e1,R=v.d*1e-6/2,k=o.X.mode==='core';
+ const a=anim?Math.min(.99,aI):+$('al').value;if(anim)$('al').value=a;const Zv=+$('zz').value;$('alv').textContent=a.toFixed(2);$('zzv').textContent=Zv.toFixed(2);
+ const fi0=film(R,e),dl=e.DCN/fi0.kc,Ce=fi0.Ce,r1=Math.pow(1-a,1/3),r2=Math.pow(Zv+(1-Zv)*(1-a),1/3);
+ drawSphere(a,Zv,dl,R);
+ const cell=(l,x)=>`<div class="mc"><span>${l}</span><b>${x}</b></div>`;
+ $('sm').innerHTML=cell('Radio de oro sin disolver',(r1*R*1e6).toFixed(1)+' de '+(R*1e6).toFixed(1)+' µm')+cell('Au disuelto (α·accesible)',(a*o.X.xmax*100).toFixed(1)+' %')+cell('r₁/r₀ · r₂/r₀',r1.toFixed(3)+' · '+r2.toFixed(3))+cell('Espesor real (r₂−r₁)/r₀',(r2-r1).toFixed(3))+cell('y de Jander /r₀',(1-r1).toFixed(3))+cell('Área de interfase (r₁/r₀)²',(r1*r1).toFixed(3))+cell('Volumen total (r₂/r₀)³',(r2**3).toFixed(3))+cell('Película límite δ',(dl*1e6).toFixed(1)+' µm');
+ // perfil en la capa
+ const px=[0,r1],py=[0,0],pl=[0,r1],pf=[0,0];
+ if(r2-r1>1e-3)for(let i=1;i<=40;i++){const r=r1+(r2-r1)*i/40;px.push(r);py.push((1/r1-1/r)/(1/r1-1/r2));pl.push(r);pf.push((r-r1)/(r2-r1))}
+ plot($('cv2a'),{s:[{x:px,y:py,c:col('--ok'),n:'Capa esférica (exacto)'},{x:pl,y:pf,c:col('--ac2'),dash:1,n:'Placa plana (lineal)'}],xmax:Math.max(1,r2)*1.05,ymax:1,legL:1,xl:'Posición radial r / r₀',yl:'C / C_s'});
+ // verificación numérica
+ {const T=v.t,N=o.Nn,Rr=R,tr=rhoB*Rr/(bst*Ce*e.ks),kA=2*bst*Ce*e.De/(rhoB*Rr*Rr);let m1=0,m2=0;
+  for(let i=1;i<=N;i++){const th=i*T/N*3600;m1=Math.max(m1,Math.abs(o.s1.r.x[i]-(1-Math.pow(1-Math.min(1,th/tr),3))));if(k)m2=Math.max(m2,Math.abs(o.s1.a.x[i]-gbInv(kA*th)))}
+  $('n2a').textContent='Verificación numérica (partícula P80): diferencia máxima con la Ec. 3.15 = '+(m1*100).toFixed(2)+' puntos de α'+(k?' y con la Ec. 4.23 = '+(m2*100).toFixed(2)+' puntos.':'.')}
+ // comparación de modelos
+ const view=+$('cmpv').value,al=[];for(let i=0;i<=100;i++)al.push(Math.max(i/100,.004));
+ const mods=[['Jander',gJ,'--ac2'],['C–G–B',gG,'--ok'],['C–C–V (Z = '+Zv.toFixed(2)+')',q=>gC(q,Zv),'--rd']],aa=Math.max(a,.004);
+ if(view===0)plot($('cv2b'),{s:mods.map(([n,g,c])=>({x:al.map(g),y:al.map(q=>q*100),c:col(c),n})),pts:mods.map(([,g,c])=>[g(aa),aa*100,col(c),5]),xmax:1,ymax:100,xl:'Tiempo adimensional τ = K·t',yl:'Fracción reaccionada α (%)'});
+ else plot($('cv2b'),{s:mods.map(([n,g,c])=>({x:al,y:al.map(q=>g(q)/(q*q/9)),c:col(c),n})),pts:mods.map(([,g,c])=>[aa,g(aa)/(aa*aa/9),col(c),5]),xmax:1,ymax:Math.max(3.2,Zv*1.15),xl:'Fracción reaccionada α',yl:'g(α) / (α²/9)'});
+ const K=2*bst*Ce*e.De/(rhoB*R*R)*3600,fm=(g,q)=>{const t=g(q);return t.toFixed(3)+' <i>· '+(t/K).toFixed(1)+' h</i>'};
+ $('tb2b').innerHTML='<tr><th>α</th><th>Jander</th><th>C–G–B</th><th>C–C–V (Z = '+Zv.toFixed(2)+')</th><th>τ Jander / τ C–G–B</th></tr>'+[.2,.5,.8,.9,1].map(q=>`<tr><td>${q}</td><td>${fm(gJ,q)}</td><td>${fm(gG,q)}</td><td>${fm(q2=>gC(q2,Zv),q)}</td><td>${(gJ(q)/gG(q)).toFixed(2)}</td></tr>`).join('');
+ $('n2b').innerHTML='Cada celda: τ y el tiempo equivalente para la partícula P80 aislada, con K = 2·b·D<sub>e</sub>·C<sub>ef</sub>/(ρ<sub>B</sub>·r₀²) = '+K.toFixed(3)+' h⁻¹. Jander y C–G–B coinciden para α pequeño y a conversión completa Jander pide 3 veces más tiempo; con Z &gt; 1 (capa que crece) la difusión es más lenta, con Z &lt; 1 la capa se vuelve porosa y el control difusional pierde sentido.'+(Math.abs(Zv-1)<.03?' Con Z = 1, C–C–V y C–G–B coinciden (la curva roja tapa a la verde).':'')+(k?'':' <b>Modo «esfera que se encoge»: no hay capa de producto; las curvas son ilustrativas.</b>');
+ // tamaño de partícula
+ const S=sizeStudy(o),cs={Película:'--ac2',Reacción:'--rd',Matriz:'--ok',Combinado:'--ac'},fin=Object.values(S.t).flat().filter(q=>q<1e8),ym=Math.max(1.4*v.t,Math.min(Math.max(...fin),3*v.t));
+ const sc=S.regs.map(([n])=>({x:S.ds,y:S.t[n],c:col(cs[n]),dash:n!=='Combinado',w:n==='Combinado'?3:1.8,clip:1,n}));
+ sc.push({x:[20,300],y:[v.t,v.t],c:col('--tx'),dash:1,w:1.3,n:'Tiempo disponible '+v.t.toFixed(1)+' h'});sc.push({x:[v.d,v.d],y:[0,ym],c:col('--mu'),dash:1,w:1.3});
+ plot($('cv2c'),{s:sc,xmin:20,xmax:300,ymax:ym,legL:1,xl:'Tamaño de partícula P80 (µm)',yl:'Tiempo para α = 90 % (h)'});
+ const gl=S.rec.map(r=>V.rc+(100-V.rc)*r/100),lo=Math.max(0,Math.floor((Math.min(...S.rec)-5)/10)*10);
+ plot($('cv2d'),{s:[{x:S.ds,y:S.rec,c:col('--ac'),w:3,n:'Lixiviación (4 tanques)'},{x:S.ds,y:gl,c:col('--ok'),n:'Global (con Knelson)'},{x:[v.d,v.d],y:[lo,100],c:col('--mu'),dash:1,w:1.3}],xmin:20,xmax:300,ymin:lo,ymax:100,xl:'Tamaño de partícula P80 (µm)',yl:'Recuperación de Au (%)'});
+ $('tb2').innerHTML='<tr><th>Régimen (partícula P80)</th><th>t₉₀ (h)</th><th>n en t ∝ r₀ⁿ</th><th>¿Entra en '+v.t.toFixed(1)+' h?</th></tr>'+o.lst.map(([,nm])=>`<tr><td>${nm}</td><td>${tm(o.t90[nm])}</td><td>${o.nexp[nm]==null?'–':o.nexp[nm].toFixed(2)}</td><td>${o.t90[nm]!=null&&o.t90[nm]<=v.t?'Sí':'No'}</td></tr>`).join('');
+ const cb=S.t.Combinado;let dmax=null;for(let i=1;i<cb.length;i++)if(cb[i]>v.t){dmax=S.ds[i-1]+(S.ds[i]-S.ds[i-1])*(v.t-cb[i-1])/(cb[i]-cb[i-1]);break}
+ let reg='',mx=-1;Object.entries(o.t90).filter(([n])=>n!=='Combinado').forEach(([n,t])=>{const q=t==null?1e9:t;if(q>mx){mx=q;reg=n}});
+ $('n2c').innerHTML='Hoy controla la etapa <b>'+reg+'</b>. Referencia del libro: n ≈ 1 si manda la reacción química y n ≈ 2 si manda la difusión por la capa. '+(dmax==null?'Con el tiempo disponible, todos los tamaños del rango alcanzan el 90 % de conversión del grano.':'Con '+v.t.toFixed(1)+' h de residencia total, el tamaño máximo que alcanza 90 % de conversión del grano es ≈ <b>'+dmax.toFixed(0)+' µm</b> (modelo combinado); tu P80 actual es '+v.d.toFixed(0)+' µm'+(v.d>dmax?', es decir, está por encima de ese límite.':'.'))}
+function gbInv(kt){if(kt>=1/3)return 1;let a=0,b=1;for(let i=0;i<40;i++){const m=(a+b)/2;(gG(m)<kt?a=m:b=m)}return a}
+// ---------- pestaña 4: capa límite (cap. 5) ----------
+const epsOf=r=>.135*Math.pow(r/52,3),rpmOf=e=>52*Math.pow(e/.135,1/3);
+function setV(id,val){const nu=$('n_'+id),ra=$('r_'+id);val=+Math.min(+nu.max,Math.max(+nu.min,val)).toFixed(3);V[id]=val;nu.value=val;ra.value=val;live()}
+function o2At(v,X){const a=aer(v,X);return Math.max(.2,a.Cs-X.our/a.kla)/32}
+function frate(v,X,o2,Rm){const e=env(v,X,o2),fi=film(Rm,e),vf=fi.Ja/rhoB,vr=bst*fi.Ce*e.ks/rhoB,vg=(vf>0&&vr>0)?1/(1/vf+1/vr):0;return{e,fi,vf,vr,vg}}
+function drawProfile(cv,o){const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;const dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;
+ const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ const m={l:12,r:14,t:26,b:50},sw=Math.min(84,W*.15),x0=m.l+sw,pw=W-x0-m.r,ph=H-m.t-m.b,tx=col('--tx'),mu=col('--mu'),dm=(o.dC+o.dO)/2;
+ const X=u=>x0+u/o.xmax*pw,Y=c=>m.t+ph*(1-c/1.08);
+ x.fillStyle=col('--bd');x.globalAlpha=.35;x.fillRect(x0,m.t,pw,ph);x.fillStyle=col('--ac2');x.globalAlpha=.13;x.fillRect(x0,m.t,X(dm)-x0,ph);
+ x.fillStyle=mu;x.globalAlpha=.5;x.fillRect(m.l,m.t,sw,ph);x.globalAlpha=1;
+ x.setLineDash([2,4]);x.lineWidth=1;x.strokeStyle=tx;x.globalAlpha=.55;x.beginPath();x.moveTo(x0,Y(1));x.lineTo(W-m.r,Y(1));x.stroke();x.globalAlpha=1;x.setLineDash([]);
+ x.font='12px system-ui';x.fillStyle=tx;x.textAlign='right';x.fillText('Concentración en el seno (100 %)',W-m.r-2,Y(1)-5);
+ const curve=(d,s,c)=>{x.beginPath();x.strokeStyle=c;x.lineWidth=3;for(let i=0;i<=120;i++){const u=o.xmax*i/120,cc=1-(1-s)*Math.exp(-u/d);i?x.lineTo(X(u),Y(cc)):x.moveTo(X(u),Y(cc))}x.stroke();
+  x.beginPath();x.setLineDash([6,4]);x.lineWidth=1.8;x.strokeStyle='#d97706';x.moveTo(X(0),Y(s));x.lineTo(X(d),Y(1));x.stroke();
+  x.lineWidth=1;x.strokeStyle=c;x.setLineDash([2,3]);x.beginPath();x.moveTo(X(d),Y(1));x.lineTo(X(d),Y(0));x.stroke();x.setLineDash([])};
+ curve(o.dC,o.sC,col('--ac2'));curve(o.dO,o.sO,col('--rd'));
+ x.textAlign='left';x.font='600 12px system-ui';x.fillStyle=col('--ac2');x.fillText('δ CN⁻ = '+o.dC.toFixed(1)+' µm',X(o.dC)+5,m.t-10);x.fillStyle=col('--rd');x.fillText('δ O₂ = '+o.dO.toFixed(1)+' µm',X(o.dO)+5,m.t+3);
+ x.strokeStyle=tx;x.lineWidth=2;x.beginPath();const ax=X(2.7*dm),bx=X(1.05*dm),ay=Y(.42);x.moveTo(ax,ay);x.lineTo(bx,ay);x.stroke();x.fillStyle=tx;x.beginPath();x.moveTo(bx,ay);x.lineTo(bx+9,ay-5);x.lineTo(bx+9,ay+5);x.fill();x.font='italic 14px Georgia';x.fillText('J',ax+6,ay+5);
+ x.strokeStyle=mu;x.lineWidth=1;x.beginPath();x.moveTo(x0,m.t+ph);x.lineTo(W-m.r,m.t+ph);x.stroke();x.fillStyle=mu;x.font='11px system-ui';x.textAlign='center';
+ for(let i=0;i<=5;i++){const u=o.xmax*i/5;x.fillText(u.toFixed(0),X(u),m.t+ph+14)}
+ x.fillText('Distancia a la superficie del grano (µm)',x0+pw/2,m.t+ph+30);x.font='12px system-ui';x.fillText('Sólido',m.l+sw/2,m.t+ph+30);x.fillText('(grano de oro)',m.l+sw/2,m.t+ph+43);
+ x.save();x.translate(m.l+sw/2,m.t+ph/2);x.rotate(-Math.PI/2);x.fillStyle=tx;x.globalAlpha=.7;x.font='600 13px system-ui';x.fillText('Au⁰',0,4);x.restore()}
+function drawMap(cv,o){const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;const dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;
+ const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ const m={l:46,r:12,t:12,b:84},pw=W-m.l-m.r,ph=H-m.t-m.b,nx=34,ny=26,r0=38,r1=170,T0=5,T1=60;
+ const rg=h=>{const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255]},cF=rg(col('--ac2')),cR=rg(col('--rd')),mix=s=>cR.map((c,i)=>Math.round(c*(1-s)+cF[i]*s));
+ const rows=[];for(let j=0;j<ny;j++){const T=T0+(T1-T0)*(j+.5)/ny,row=[];for(let i=0;i<nx;i++)row.push(o.f(r0+(r1-r0)*(i+.5)/nx,T,j));rows.push(row)}
+ const fl=rows.flat(),smin=Math.min(...fl),smax=Math.max(...fl),nz=s=>smax>smin?(s-smin)/(smax-smin):1;
+ x.globalAlpha=.88;rows.forEach((row,j)=>row.forEach((s,i)=>{x.fillStyle='rgb('+mix(nz(s)).join(',')+')';x.fillRect(m.l+i*pw/nx,m.t+ph-(j+1)*ph/ny,pw/nx+.6,ph/ny+.6)}));x.globalAlpha=1;
+ x.strokeStyle='#fff';x.lineWidth=2;x.setLineDash([5,4]);x.beginPath();let st=false;
+ rows.forEach((row,j)=>{let xc=null;for(let i=1;i<nx;i++)if((row[i-1]-.5)*(row[i]-.5)<=0&&row[i]!==row[i-1]){xc=i-.5+(.5-row[i-1])/(row[i]-row[i-1]);break}
+  if(xc!=null){const px=m.l+xc*pw/nx,py=m.t+ph-(j+.5)*ph/ny;st?x.lineTo(px,py):x.moveTo(px,py);st=true}});x.stroke();x.setLineDash([]);
+ const X=r=>m.l+(r-r0)/(r1-r0)*pw,Y=T=>m.t+ph-(T-T0)/(T1-T0)*ph;
+ x.beginPath();x.arc(X(o.rpm),Y(o.T),7,0,7);x.fillStyle='#fff';x.fill();x.lineWidth=2.5;x.strokeStyle='#111';x.stroke();
+ x.fillStyle=col('--mu');x.font='11px system-ui';x.textAlign='right';[10,20,30,40,50,60].forEach(T=>x.fillText(T,m.l-6,Y(T)+4));x.textAlign='center';[40,80,120,160].forEach(r=>x.fillText(r,X(r),m.t+ph+15));
+ x.fillText('Agitación (rpm)',m.l+pw/2,m.t+ph+30);x.save();x.translate(12,m.t+ph/2);x.rotate(-Math.PI/2);x.fillText('Temperatura (°C)',0,0);x.restore();
+ const gw=Math.min(260,pw),gx=m.l+pw/2-gw/2,gy=H-46,g=x.createLinearGradient(gx,0,gx+gw,0);g.addColorStop(0,'rgb('+cR.join(',')+')');g.addColorStop(1,'rgb('+cF.join(',')+')');x.fillStyle=g;x.fillRect(gx,gy,gw,10);
+ x.fillStyle=col('--mu');x.textAlign='left';x.fillText('Película pesa '+Math.round(smin*100)+' %',gx,gy+24);x.textAlign='right';x.fillText('Película pesa '+Math.round(smax*100)+' %',gx+gw,gy+24);
+ x.textAlign='center';x.fillText('Color: peso de la película en la resistencia total · Punto blanco: tu condición'+(st?' · Línea: 50 %':''),m.l+pw/2,H-6)}
+function renderP4(o){
+ const v=o.v,X0=o.X,Rm=v.d*1e-6/2,rpm=rpmOf(X0.eps),um=1e6,uh=3.6e9,o2=o.e1.o2;
+ $('rp4').value=Math.round(rpm);$('rp4v').textContent=rpm.toFixed(0);$('T4').value=v.T;$('T4v').textContent=v.T;$('cn4').value=v.cn;$('cn4v').textContent=v.cn;
+ const tip=Math.PI*1.31*rpm/60,En=4*5.5*Math.pow(rpm/52,3)*24/o.cap;
+ $('rpn').innerHTML='Tu agitador (Ø1,31 m) gira a 52 rpm, con 5,5 kW por tanque. Se relaciona con ε ∝ N³ (52 rpm ↔ 0,135 W/kg). Ahora: <b>'+rpm.toFixed(0)+' rpm</b> = ε '+X0.eps.toFixed(2)+' W/kg, velocidad periférica '+tip.toFixed(1)+' m/s y energía de agitación ≈ '+En.toFixed(1)+' kWh/t.';
+ const A=frate(v,X0,o2,Rm),e=A.e,fi=A.fi,dC=e.DCN/fi.kc,dO=e.DO2/fi.ko,NA=fi.Ce/(1/fi.kc+1/e.ks);
+ const sC=Math.max(0,e.cn-NA/fi.kc)/e.cn,sO=e.o2>0?Math.max(0,e.o2-NA/4/fi.ko)/e.o2:0;
+ const eLo=env(v,{...X0,eps:epsOf(38)},o2),fLo=film(Rm,eLo),xmax=Math.ceil(4*Math.max(eLo.DCN/fLo.kc,eLo.DO2/fLo.ko)*um/10)*10;
+ drawProfile($('pf'),{dC:dC*um,dO:dO*um,sC,sO,xmax});
+ const cell=(l,x)=>`<div>${l}<b>${x}</b></div>`;
+ $('pm').innerHTML=cell('δ del CN⁻ (µm)',(dC*um).toFixed(1))+cell('h<sub>m</sub> = D/δ, CN⁻ (cm/s)',(fi.kc*100).toFixed(4))+cell('h<sub>m</sub>, O₂ (cm/s)',(fi.ko*100).toFixed(4))+cell('δ / radio del grano',(dC/Rm).toFixed(2))+cell('O₂ en la superficie',(sO*100).toFixed(0)+' % del seno')+cell('Disolución inicial (µm/h)',(A.vg*uh).toFixed(2));
+ // 2: δ contra agitación
+ const rps=[];for(let r=38;r<=170;r+=4)rps.push(r);
+ const dF=(rp,d)=>{const e2=env(v,{...X0,eps:epsOf(rp)},o2),f2=film(d*1e-6/2,e2);return e2.DCN/f2.kc*um};
+ const sz=[[v.d/2,'--ok'],[v.d,'--ac'],[v.d*2,'--rd']],s2=sz.map(([d,c],i)=>({x:rps,y:rps.map(r=>dF(r,d)),c:col(c),w:i===1?3:2,dash:i!==1,n:'Grano de '+d.toFixed(0)+' µm'}));
+ plot($('cv4b'),{s:s2,pts:[[rpm,dF(rpm,v.d),col('--tx'),5]],xmin:38,xmax:170,ymax:Math.max(...s2[2].y)*1.08,xl:'Agitación (rpm)',yl:'Espesor δ del CN⁻ (µm)'});
+ const d1=dF(rpm,v.d),d2=dF(rpm*2,v.d),nE=Math.log(d1/d2)/Math.log(2);
+ $('n4b').innerHTML='Con tus condiciones, al duplicar las rpm el espesor pasa de <b>'+d1.toFixed(1)+'</b> a <b>'+d2.toFixed(1)+' µm</b> (δ ∝ rpm<sup>−'+nE.toFixed(2)+'</sup>): la película se adelgaza '+((1-d2/d1)*100).toFixed(0)+' %, no a la mitad. Un grano de '+(v.d/2).toFixed(0)+' µm tiene una película de '+dF(rpm,v.d/2).toFixed(1)+' µm y uno de '+(v.d*2).toFixed(0)+' µm, de '+dF(rpm,v.d*2).toFixed(1)+' µm.';
+ // 3: Elsner
+ const ppm=[];for(let p=0;p<=1000;p+=20)ppm.push(p);
+ const vA=(p,mul)=>frate({...v,cn:p},X0,o2*mul,Rm).vg*uh,cr=4*e.DO2/e.DCN,ra=e.o2>0?e.cn/e.o2:Infinity,pc=cr*e.o2*49.01/frac(v.ph);
+ const y1=ppm.map(p=>vA(p,1)),y2=ppm.map(p=>vA(p,1.5)),ym=Math.max(...y2)*1.1||1;
+ plot($('cv4d'),{s:[{x:ppm,y:y1,c:col('--ac'),w:3,n:'O₂ actual ('+(o2*32).toFixed(1)+' mg/L)'},{x:ppm,y:y2,c:col('--ac2'),dash:1,n:'O₂ +50 % ('+(o2*48).toFixed(1)+' mg/L)'},{x:[pc,pc],y:[0,ym],c:col('--mu'),dash:1,w:1.3,n:'Relación crítica (≈ '+pc.toFixed(0)+' ppm)'}],pts:[[v.cn,vA(v.cn,1),col('--rd'),6]],xmax:1000,ymax:ym,legL:1,xl:'Cianuro NaCN (ppm)',yl:'Disolución del grano (µm/h)'});
+ const gO=vA(v.cn,1.5)/vA(v.cn,1)-1,gC=vA(v.cn*1.5,1)/vA(v.cn,1)-1;
+ $('n4d').innerHTML='[CN⁻]/[O₂] = <b>'+(isFinite(ra)?ra.toFixed(0):'∞')+'</b> (crítico '+cr.toFixed(1)+'): '+(ra>cr?'estás en la meseta, <b>manda el oxígeno</b>. Subir el NaCN 50 % cambia la velocidad solo '+(gC*100).toFixed(0)+' %, mientras que subir el O₂ disuelto 50 % la cambia '+(gO*100).toFixed(0)+' %.':'<b>manda el cianuro</b>: subir el NaCN 50 % la cambia '+(gC*100).toFixed(0)+' %.')+' La concentración de NaCN a partir de la cual cambia el control es ≈ '+pc.toFixed(0)+' ppm.';
+ // 4: etapa controlante
+ const rows=rps.map(r=>frate(v,{...X0,eps:epsOf(r)},o2,Rm)),vmx=Math.max(...rows.map(q=>q.vg))*uh,y4=1.6*vmx;
+ plot($('cv4c'),{s:[{x:rps,y:rows.map(q=>q.vf*uh),c:col('--ac2'),dash:1,clip:1,n:'Solo película'},{x:rps,y:rows.map(q=>q.vr*uh),c:col('--rd'),dash:1,clip:1,n:'Límite de la reacción superficial'},{x:rps,y:rows.map(q=>q.vg*uh),c:col('--ac'),w:3.2,n:'Global (en serie)'}],pts:[[rpm,A.vg*uh,col('--tx'),5]],xmin:38,xmax:170,ymax:y4,legL:1,xl:'Agitación (rpm)',yl:'Disolución del grano (µm/h)'});
+ const share=(1/A.vf)/((1/A.vf)+(1/A.vr));
+ drawMap($('cv4m'),{rpm,T:v.T,f:(rp,T,j)=>{const v2={...v,T},X2={...X0,eps:epsOf(rp)},q=frate(v2,X2,o2At(v2,X0),Rm);return q.vf>0?(1/q.vf)/((1/q.vf)+(1/q.vr)):1}});
+ const ctrl=share>.65?'Película ('+(ra>cr?'O₂':'CN⁻')+')':share<.35?'Reacción superficial':'Mixto (película y superficie)';
+ $('shb').innerHTML=`<div style="width:${share*100}%;background:${col('--ac2')}">Película ${(share*100).toFixed(0)}%</div><div style="width:${(1-share)*100}%;background:${col('--rd')}">Superficie ${((1-share)*100).toFixed(0)}%</div>`;
+ $('k4').innerHTML=cell('Etapa controlante',ctrl)+cell('Velocidad de disolución (µm/h)',(A.vg*uh).toFixed(2))+cell('t<sub>90</sub> del grano P80 (h)',(.5358*Rm/A.vg/3600).toFixed(1))+cell('Energía de agitación (kWh/t)',En.toFixed(1));
+ const sc=[['Duplicar la agitación (×2 rpm)',v,{...X0,eps:epsOf(2*rpm)},1,Rm,'energía ×8'],['Subir 10 °C',{...v,T:v.T+10},X0,1,Rm,'calentar la pulpa'],['Subir el NaCN 50 %',{...v,cn:v.cn*1.5},X0,1,Rm,'más reactivo'],['Subir el O₂ disuelto 50 %',v,X0,1.5,Rm,'más aire u oxígeno'],['Moler a la mitad (P80/2)',v,X0,1,Rm/2,'más molienda']];
+ const res=sc.map(([n,vv,XX,mul,RR,nt])=>({n,nt,p:(frate(vv,XX,o2At(vv,XX)*mul,RR).vg/A.vg-1)*100})),best=res.reduce((a,b)=>b.p>a.p?b:a);
+ $('tb4s').innerHTML='<tr><th>Acción</th><th>Cambio en la velocidad</th><th>Costo / nota</th></tr>'+res.map(q=>`<tr><td>${q.n}</td><td><span class="sb" style="width:${Math.max(2,Math.min(100,q.p))}px"></span>${q.p>=0?'+':''}${q.p.toFixed(0)} %</td><td>${q.nt}</td></tr>`).join('');
+ $('n4s').innerHTML='Hoy controla: <b>'+ctrl+'</b>. La palanca más efectiva es <b>'+best.n[0].toLowerCase()+best.n.slice(1)+'</b> ('+(best.p>=0?'+':'')+best.p.toFixed(0)+' %). '+(res[0].p<5&&res[1].p>25?'Poca sensibilidad a la agitación y fuerte a la temperatura: es la señal de que la reacción en la superficie es la que limita. ':res[0].p>=5?'Duplicar la agitación acelera la disolución '+res[0].p.toFixed(0)+' % pero multiplica por 8 la energía de agitación (de '+En.toFixed(1)+' a '+(En*8).toFixed(0)+' kWh/t). ':'')+'La película pesa más que la superficie en la zona azul del mapa (poca agitación, baja temperatura) y menos en la roja.';
+ // 5: números adimensionales
+ const d=2*Rm,shC=fi.sc,shO=sh(d,e,e.DO2),nuP=e.nuE,Re=Math.pow(X0.eps,1/3)*Math.pow(d,4/3)/nuP;
+ $('tb4n').innerHTML='<tr><th>Número</th><th>CN⁻</th><th>O₂</th><th>Qué significa</th></tr>'+[
+  ['Schmidt, N<sub>Sc</sub> = ν/D',(e.nu/e.DCN).toFixed(0),(e.nu/e.DO2).toFixed(0),'Valor alto: la película de concentración es mucho más delgada que la de velocidad'],
+  ['Sherwood, N<sub>Sh</sub> = h<sub>m</sub>·d/D = d/δ',shC.toFixed(1),shO.toFixed(1),'Transferencia total frente a difusión pura (Sh = 2 sin agitación)'],
+  ['Aporte de la agitación, (Sh − 2)/Sh',((shC-2)/shC*100).toFixed(0)+' %',((shO-2)/shO*100).toFixed(0)+' %','Parte del transporte que se debe a la convección'],
+  ['Grupo de Reynolds, ε<sup>1/3</sup>d<sup>4/3</sup>/ν<sub>pulpa</sub>',Re.toFixed(2),Re.toFixed(2),'Intensidad de la agitación a la escala del grano (ν de la pulpa = '+(nuP/e.nu).toFixed(2)+' × la del agua)'],
+  ['h<sub>m</sub> (cm/s) · δ (µm)',(fi.kc*100).toFixed(4)+' · '+(dC*um).toFixed(1),(fi.ko*100).toFixed(4)+' · '+(dO*um).toFixed(1),'Resultado final de la película']].map(r=>'<tr><td>'+r.join('</td><td>')+'</td></tr>').join('');
+ $('n4n').innerHTML='Cuando Sh se acerca a 2 la agitación casi no ayuda y la película es del orden del radio del grano (δ/r = '+(dC/Rm).toFixed(2)+'). La oxigenación de cada tanque (cap. 5.2 y 6) también es de primer orden: el O₂ alcanza el 50 % de su valor de régimen en t<sub>½</sub> = ln 2/(K<sub>L</sub>a) = <b>'+(Math.LN2/o.ae.kla*60).toFixed(0)+' min</b> tras arrancar el aire.'}
+// ---------- pestaña 1: reactores en serie ----------
+const PRE=[['Diseño base',{t:30.8,air:.2,d:75,cn:500,our:3},'Valores de tu documento de proyecto.'],['Poco aire',{air:.08},'Menos aire: baja el oxígeno disuelto, sobre todo en los primeros tanques.'],['Molienda gruesa',{d:106},'P80 de 106 µm en vez de 75 µm.'],['Menos tiempo',{t:24},'24 h de residencia total en vez de 30,8 h.']];
+function setMany(ob){for(const k in ob){const nu=$('n_'+k),ra=$('r_'+k),val=Math.min(+nu.max,Math.max(+nu.min,ob[k]));V[k]=val;nu.value=val;ra.value=val}live()}
+function buildPre(){PRE.forEach(([n,ob,tx])=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{if(anim||!RES)return;const a=RES.rec[3];setMany(ob);$('prn').innerHTML='<b>'+n+':</b> '+tx+' Recuperación de la lixiviación: '+a.toFixed(1)+' % → <b>'+RES.rec[3].toFixed(1)+' %</b>.'};$('pre').appendChild(b)})}
+const mcell=(l,x)=>`<div>${l}<b>${x}</b></div>`;
+function renderP1(o,f){
+ const v=o.v,tau=o.tau,tc=v.t*f,X=o.X,fi=Math.min(3.9999,f*4),j0=Math.floor(fi),tk=[0,...o.rec];
+ const lev=o.rec.map((r,j)=>f*4>=j+1?r:f*4>j?tk[j]+(r-tk[j])*(f*4-j):0),Rf=tk[j0]+(tk[j0+1]-tk[j0])*(fi-j0);
+ const volT=1/2.7+(100-v.s)/v.s,Q=o.cap/24*volT,rpm=rpmOf(X.eps);
+ let h='<div class="fd"><h4>Alimentación</h4><div class="big">'+o.tail.toFixed(2)+' g/t</div><small>relaves del Knelson<br><b>'+o.cap.toFixed(0)+' t/d</b> · '+v.s+' % sólidos<br>Q = <b>'+Q.toFixed(2)+' m³/h</b></small></div>';
+ o.rec.forEach((r,j)=>{const dr=r-(j?o.rec[j-1]:0),DO=o.ej[j].DO;
+  h+='<div class="ar">→</div><div class="tk"><h4>Tanque '+(j+1)+'</h4><div class="tank"><div class="lv" style="height:'+lev[j]+'%"></div></div><div class="big">'+lev[j].toFixed(1)+' %</div><small>recuperado hasta aquí<br>aporta <b>+'+dr.toFixed(1)+'</b> puntos<br>τ = <b>'+tau.toFixed(1)+' h</b><br><span class="'+(DO<6?'wn':'')+'">O₂ = <b>'+DO.toFixed(1)+' mg/L</b></span></small></div>'});
+ h+='<div class="ar">→</div><div class="fd"><h4>Relave final</h4><div class="big">'+(o.tail*(1-Rf/100)).toFixed(2)+' g/t</div><small>oro que sale sin disolver<br>agitación <b>'+rpm.toFixed(0)+' rpm</b><br>aire <b>'+X.air.toFixed(2)+' m³/min</b> por tanque</small></div>';
+ $('trn').innerHTML=h;
+ // 2. recuperación a lo largo del tren
+ const tx=Math.max(v.t,prev?prev.T:0,...pts.map(p=>p[0])),sr=[];
+ if(prev)sr.push({x:prev.t,y:prev.y,c:col('--mu'),dash:1,w:1.5,n:'Corrida anterior'});
+ sr.push({x:o.t,y:o.brec,c:col('--ac'),dash:1,w:1.8,n:'Reactor ideal (batch)'});
+ sr.push({x:[0,tau,2*tau,3*tau,4*tau],y:[0,...o.rec],c:col('--ac'),n:'Salida de cada tanque'});
+ plot($('cv1'),{s:sr,pts:[...pts,...o.rec.map((r,i)=>[(i+1)*tau,r,col('--rd'),5])],xmax:tx,ymax:100,legL:1,xl:'Tiempo de residencia acumulado (h)',yl:'Recuperación de Au en lixiviación (%)',upto:tc});
+ const tot=o.rec[3];
+ $('tb1').innerHTML='<tr><th>Tanque</th><th>Tiempo en el tanque (h)</th><th>O₂ disuelto (mg/L)</th><th>Conversión del oro accesible (%)</th><th>Recuperación acumulada (%)</th><th>Aporta (puntos)</th><th>Au disuelto (g/d)</th></tr>'+o.rec.map((r,i)=>{const dr=r-(i?o.rec[i-1]:0);return`<tr><td>${i+1}</td><td>${tau.toFixed(1)}</td><td${o.ej[i].DO<6?' style="color:var(--rd)"':''}>${o.ej[i].DO.toFixed(1)}</td><td>${(o.xs[i]*100).toFixed(1)}</td><td>${r.toFixed(1)}</td><td>${dr.toFixed(1)}</td><td>${(o.auFeed*dr/100).toFixed(1)}</td></tr>`}).join('');
+ const lowDO=o.ej.map((t,i)=>t.DO<6?i+1:0).filter(Boolean);
+ $('n1a').innerHTML='El tanque 1 aporta el <b>'+(o.rec[0]/tot*100).toFixed(0)+' %</b> de todo el oro que se disuelve y el tanque 4 solo el <b>'+((o.rec[3]-o.rec[2])/tot*100).toFixed(0)+' %</b>: al principio hay mucho oro fácil de disolver y al final queda el más difícil (granos grandes o cubiertos por la matriz). La recuperación es la conversión multiplicada por el oro accesible ('+(X.xmax*100).toFixed(0)+' %): el resto es oro refractario que el cianuro no alcanza.'+(lowDO.length?' <b style="color:var(--rd)">En el tanque '+lowDO.join(', ')+' el oxígeno queda por debajo de 6 mg/L: revisa el aire (sección 4).</b>':'');
+ // 3. número de tanques
+ const nx=[1,2,3,4,5,6,7,8],bT=o.brec[o.brec.length-1];
+ plot($('cv1b'),{s:[{x:nx,y:o.nt,c:col('--ac'),w:3,n:'Mismo volumen total, n tanques'},{x:[1,8],y:[bT,bT],c:col('--mu'),dash:1,w:1.5,n:'Reactor ideal (batch)'}],pts:[...nx.map((n,i)=>[n,o.nt[i],col('--ac'),4]),[4,o.nt[3],col('--rd'),7]],xmin:1,xmax:8,xint:1,ymin:Math.max(0,Math.floor((Math.min(...o.nt)-4)/5)*5),ymax:Math.min(100,Math.ceil(bT/2)*2+2),legL:1,xl:'Número de tanques en serie (volumen total y tiempo de residencia constantes)',yl:'Recuperación de Au (%)'});
+ $('n1b').innerHTML='Con '+v.t.toFixed(1)+' h repartidas: 1 tanque → <b>'+o.nt[0].toFixed(1)+' %</b>, 2 → '+o.nt[1].toFixed(1)+' %, 3 → '+o.nt[2].toFixed(1)+' %, 4 → <b>'+o.nt[3].toFixed(1)+' %</b>. Un quinto tanque (con el mismo volumen total) subiría solo <b>'+(o.nt[4]-o.nt[3]).toFixed(1)+' puntos</b>; el reactor ideal llega a '+bT.toFixed(1)+' %. Pasar de 1 a 4 tanques gana <b>'+(o.nt[3]-o.nt[0]).toFixed(1)+' puntos</b>; después casi no hay mejora, y el resto de la ventaja es práctica: tanques más pequeños y poder sacar uno a mantenimiento.';
+ $('c3').innerHTML='<b>Un tanque en mantenimiento:</b> con 3 tanques de '+tau.toFixed(1)+' h (total '+(3*tau).toFixed(1)+' h, el caso de tu documento) la recuperación de la lixiviación pasa de '+o.rec[3].toFixed(1)+' % a <b>'+o.rec3.toFixed(1)+' %</b> ('+(o.rec3-o.rec[3]).toFixed(1)+' puntos) y la global de '+o.glob.toFixed(1)+' % a '+(V.rc+(100-V.rc)*o.rec3/100).toFixed(1)+' %.';
+ // 4. aireación
+ const Fs=[];for(let i=1;i<=20;i++)Fs.push(i*.05);
+ const doF=(F,k)=>Math.max(0,o.ae.Cs-X.our*k/(o.ae.kla*F/X.air)),Fn=o.ae.Cs>6?X.air*(X.our/(o.ae.Cs-6))/o.ae.kla:Infinity;
+ plot($('cv1c'),{s:[{x:Fs,y:Fs.map(F=>doF(F,1)),c:col('--rd'),w:3,n:'Tanque 1 (mayor demanda)'},{x:Fs,y:Fs.map(F=>doF(F,.4)),c:col('--ok'),w:2.4,n:'Tanque 4 (menor demanda)'},{x:[.05,1],y:[6,6],c:col('--mu'),dash:1,w:1.4,n:'Mínimo recomendado (6 mg/L)'}],pts:[[X.air,doF(X.air,1),col('--rd'),6],[X.air,doF(X.air,.4),col('--ok'),6]],xmin:.05,xmax:1,ymax:Math.ceil(o.ae.Cs+3),legL:1,xl:'Aire por tanque (m³/min)',yl:'O₂ disuelto (mg/L)'});
+ $('mt1').innerHTML=mcell('K<sub>L</sub> de la burbuja (m/s)',(o.ae.KL*1e4).toFixed(2)+'×10⁻⁴')+mcell('Área de burbujas a (m²/m³)',o.ae.a.toFixed(1))+mcell('K<sub>L</sub>·a (h⁻¹)',o.ae.kla.toFixed(1))+mcell('O₂ de saturación (mg/L)',o.ae.Cs.toFixed(1));
+ $('n1c').innerHTML='Con '+X.air.toFixed(2)+' m³/min por tanque, el tanque 1 queda con <b>'+o.ej[0].DO.toFixed(1)+' mg/L</b> y el 4 con '+o.ej[3].DO.toFixed(1)+' mg/L. '+(isFinite(Fn)?'Con la demanda supuesta bastarían ≈ <b>'+Fn.toFixed(2)+' m³/min</b> por tanque para mantener 6 mg/L en el tanque 1'+(X.air<Fn?', y hoy estás por debajo. ':'; tu documento estima 0,15–0,3, lo que deja margen si la demanda real es mayor. '):'')+'La saturación baja con la temperatura y con la altitud, y la demanda de oxígeno depende del mineral: conviene medirla.';
+ // 5. balance
+ const feedAu=o.cap/(1-V.mp/100)*V.feed,grav=feedAu*V.rc/100,dis=o.au,loss=feedAu-grav-dis,pc=q=>q/feedAu*100;
+ const sg=(q,n,c)=>`<div title="${n}: ${pc(q).toFixed(1)} %" style="width:${pc(q)}%;background:${col(c)};white-space:nowrap">${pc(q)>=12?n+' ':''}${pc(q).toFixed(0)} %</div>`;
+ $('bal').innerHTML=sg(grav,'Knelson','--ac2')+sg(dis,'Lixiviación','--ok')+sg(loss,'Relave','--rd');
+ $('mb1').innerHTML=mcell('Oro en la cabeza (g/d)',feedAu.toFixed(0))+mcell('Recuperado en el Knelson (g/d)',grav.toFixed(0))+mcell('Disuelto en los tanques (g/d)',dis.toFixed(0))+mcell('Perdido en el relave (g/d)',loss.toFixed(0))+mcell('Ley del relave final (g/t)',(o.tail*(1-o.rec[3]/100)).toFixed(2))+mcell('Recuperación global',o.glob.toFixed(1)+' %')}
+// ---------- pestaña 3: interfaz sólido–líquido (cap. 3) ----------
+let DG=null,DGk='';
+function drawStairs(cv,o){const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;const dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;
+ const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ const mn=!!o.mini,m=mn?{l:6,r:6,t:30,b:8}:{l:46,r:14,t:48,b:70},pw=W-m.l-m.r,ph=H-m.t-m.b,core=o.core!==false,[sf,sa,sr]=o.f;
+ const Z=[['Seno de la pulpa',.19,'--mu'],['Película límite',.2,'--ac2']];if(core)Z.push(['Capa de matriz',.24,'--ok']);Z.push(['Reacción',.17,'--rd'],['Núcleo de oro',.2,'--ac']);
+ const tw=Z.reduce((a,z)=>a+z[1],0),xs=[m.l];Z.forEach(z=>xs.push(xs[xs.length-1]+z[1]/tw*pw));
+ const Y=c=>m.t+ph*(1-c/1.05),lv=[1,1-sf,1-sf-sa,0],zr=core?3:2;
+ Z.forEach((z,i)=>{x.globalAlpha=.1;x.fillStyle=col(z[2]);x.fillRect(xs[i],m.t,xs[i+1]-xs[i],ph);x.globalAlpha=1});
+ const st=[[1,lv[0],lv[1],'--ac2',sf,'Película'],[2,lv[1],lv[2],'--ok',sa,'Matriz'],[zr,lv[2],0,'--rd',sr,'Reacción']];
+ st.forEach(([z,a,b,c,d,n])=>{if(d<.004||(z===2&&!core))return;x.globalAlpha=.34;x.fillStyle=col(c);x.fillRect(xs[z],Y(a),xs[z+1]-xs[z],Y(b)-Y(a));x.globalAlpha=1;
+  if((Y(b)-Y(a))>(mn?20:24)){x.fillStyle=col('--tx');x.font='600 '+(mn?11:12)+'px system-ui';x.textAlign='right';x.fillText((mn?'':n+' ')+(d*100).toFixed(0)+' %',xs[z+1]-4,Y(a)+15)}});
+ x.setLineDash([2,4]);x.strokeStyle=col('--mu');x.lineWidth=1;x.beginPath();x.moveTo(xs[0],Y(1));x.lineTo(xs[xs.length-1],Y(1));x.stroke();x.setLineDash([]);
+ x.strokeStyle=col('--tx');x.lineWidth=mn?2.4:3.2;x.lineJoin='round';x.beginPath();x.moveTo(xs[0],Y(1));x.lineTo(xs[1],Y(1));x.lineTo(xs[2],Y(lv[1]));
+ if(core){for(let i=1;i<=24;i++){const u=i/24;let c=lv[1]+(lv[2]-lv[1])*u;if(o.rr&&o.rr>0&&o.rr<.9995){const r=1-(1-o.rr)*u;c=lv[2]+(lv[1]-lv[2])*(1/o.rr-1/r)/(1/o.rr-1)}x.lineTo(xs[2]+u*(xs[3]-xs[2]),Y(c))}}
+ x.lineTo(xs[zr],Y(lv[2]));x.lineTo(xs[zr+1],Y(0));x.lineTo(xs[xs.length-1],Y(0));x.stroke();
+ if(mn){x.fillStyle=col('--tx');x.font='600 13px system-ui';x.textAlign='left';x.fillText(o.title,m.l+2,18);return}
+ x.font='600 12px system-ui';Z.forEach((z,i)=>{const w=xs[i+1]-xs[i],cx_=(xs[i]+xs[i+1])/2,words=z[0].split(' ');x.fillStyle=col(z[2]==='--mu'?'--tx':z[2]);x.textAlign='center';
+  if(x.measureText(z[0]).width<w-4)x.fillText(z[0],cx_,m.t-12);else{const k=Math.ceil(words.length/2);x.fillText(words.slice(0,k).join(' '),cx_,m.t-24);x.fillText(words.slice(k).join(' '),cx_,m.t-11)}});
+ x.fillStyle=col('--mu');x.font='11.5px system-ui';x.textAlign='center';(o.tl||[]).forEach((t,i)=>{if(!t)return;const parts=t.split('|'),cx_=(xs[i]+xs[i+1])/2;parts.forEach((p,j)=>x.fillText(p,cx_,m.t+ph+16+j*14))});
+ x.textAlign='right';[0,50,100].forEach(p=>x.fillText(p+' %',m.l-6,Y(p/100)+4));x.save();x.translate(11,m.t+ph/2);x.rotate(-Math.PI/2);x.textAlign='center';x.fillText('Reactivo disponible (C / C_ef)',0,0);x.restore()}
+function diag(o){const key=JSON.stringify([V,getX()]);if(DG&&key===DGk)return DG;
+ const v=o.v,X=o.X,d=v.d*1e-6,rpm=rpmOf(X.eps),o2=o.e1.o2,tA=t90of(d,o.e1,X,ALL),vT={...v,T:v.T+10},tB=t90of(d,env(vT,X,o2At(vT,X)),X,ALL),tB2=t90of(d,env(vT,X,o2),X,ALL),tC=t90of(d,env(v,{...X,eps:epsOf(2*rpm)},o2),X,ALL);
+ const ef=q=>(tA&&q)?Rg*Math.log(tA/q)/(1/(v.T+273.15)-1/(v.T+283.15))/1000:null;DG={Ea:ef(tB2),Ea2:ef(tB),ag:(tA&&tC)?(tA/tC-1)*100:null};DGk=key;return DG}
+function renderP3(o,f,aI){
+ const v=o.v,X=o.X,e=o.e1,R=v.d*1e-6/2,core=X.mode==='core',um=1e6;
+ const a=anim?Math.min(.99,aI):+$('al3').value;if(anim)$('al3').value=a;$('al3v').textContent=a.toFixed(2);
+ const rc=Math.max(1e-9,R*Math.pow(1-a,1/3)),pt=parts(rc,R,e,X),S=pt.Sf+pt.Sa+pt.Sr,sf=pt.Sf/S,sa=pt.Sa/S,sr=pt.Sr/S,dl=e.DCN/pt.fi.kc;
+ drawStairs($('cv3'),{core,f:[sf,sa,sr],rr:rc/R,tl:['C_ef|'+pt.fi.Ce.toFixed(2)+' mol/m³|≈ '+(pt.fi.Ce*49.01).toFixed(0)+' ppm NaCN','δ|'+(dl*um).toFixed(1)+' µm',...(core?['espesor|'+((R-rc)*um).toFixed(1)+' µm']:[]),'k_s|'+e.ks.toExponential(1)+' m/s','r₁|'+(rc*um).toFixed(1)+' µm']});
+ const dom=sf>=sa&&sf>=sr?0:sa>=sr?1:2,mx=[sf,sa,sr][dom],names=['la película límite','la capa de matriz','la reacción en la interfaz'],fix=['Ayudan más agitación, más oxígeno disuelto y granos más pequeños.','Ayuda moler más fino o romper la capa (por ejemplo, un pretratamiento); agitar casi no cambia nada.','Ayudan la temperatura y la concentración de reactivo; agitar casi no cambia nada.'];
+ const pcs=[['Película',sf,'--ac2'],['Matriz',sa,'--ok'],['Reacción',sr,'--rd']].filter(q=>q[1]>.004);
+ $('rs').innerHTML=pcs.map(([n,s,c])=>`<div title="${n}" style="width:${s*100}%;background:${col(c)};white-space:nowrap">${s>=.14?n+' ':''}${(s*100).toFixed(0)} %</div>`).join('');
+ $('n3a').innerHTML='Esquema no a escala; los espesores reales están debajo de cada tramo. Con α = <b>'+a.toFixed(2)+'</b> el núcleo de oro tiene un radio de <b>'+(rc*um).toFixed(1)+' µm</b>'+(core?' y la capa de matriz mide '+((R-rc)*um).toFixed(1)+' µm':'')+'. '+(mx>.55?'Domina '+names[dom]+' ('+(mx*100).toFixed(0)+' % de la caída). '+fix[dom]:'Ninguna etapa pasa del 55 %: <b>control mixto</b>, hay que actuar sobre varias a la vez.')+' El reactivo efectivo C_ef es el CN⁻ equivalente que deja pasar Elsner (limitado por el O₂).';
+ // minis
+ drawStairs($('cv3m1'),{mini:1,f:[0,0,1],title:'Reacción'});drawStairs($('cv3m2'),{mini:1,f:[0,1,0],title:'Matriz'});drawStairs($('cv3m3'),{mini:1,f:[1,0,0],title:'Película'});drawStairs($('cv3m4'),{mini:1,f:[sf,sa,sr],title:'Tu proceso (α = '+a.toFixed(2)+')'});
+ [0,1,2].forEach(i=>$('mn'+(i===0?3:i===1?2:1)).classList.toggle('hl',mx>.55&&dom===i));$('mn4').classList.toggle('hl',mx<=.55);
+ $('mn4t').innerHTML='<b>Tu proceso ahora.</b> '+(mx>.55?'Se parece al caso de '+names[dom]+'.':'Varias caídas de tamaño parecido: control mixto.')+' Película '+(sf*100).toFixed(0)+' %'+(core?', matriz '+(sa*100).toFixed(0)+' %':'')+', reacción '+(sr*100).toFixed(0)+' %.';
+ // 3. evolución con α
+ const ag=[];for(let i=0;i<=99;i++)ag.push(i);
+ const sh=ag.map(i=>{const r=Math.max(1e-9,R*Math.pow(1-i/100,1/3)),q=parts(r,R,e,X),T=q.Sf+q.Sa+q.Sr;return[q.Sf/T*100,q.Sa/T*100,q.Sr/T*100]});
+ const rt=ag.map(i=>{const r=Math.max(1e-9,R*Math.pow(1-i/100,1/3));return 3*Math.pow(1-i/100,2/3)/R*drc(r,R,e,X,ALL)*3600*100});
+ const sB=[{x:ag,y:sh.map(q=>q[0]),c:col('--ac2'),n:'Película'},{x:ag,y:sh.map(q=>q[2]),c:col('--rd'),n:'Reacción'}];if(core)sB.splice(1,0,{x:ag,y:sh.map(q=>q[1]),c:col('--ok'),n:'Matriz'});
+ sB.push({x:[a*100,a*100],y:[0,100],c:col('--mu'),dash:1,w:1.3});
+ plot($('cv3b'),{s:sB,xmin:0,xmax:99,ymax:100,legL:1,xl:'Fracción reaccionada α del oro (%)',yl:'Peso de cada etapa en la resistencia (%)'});
+ const rm=Math.max(...rt);plot($('cv3c'),{s:[{x:ag,y:rt,c:col('--ac'),w:3,n:'Velocidad de disolución'},{x:[a*100,a*100],y:[0,rm*1.05],c:col('--mu'),dash:1,w:1.3}],pts:[[a*100,rt[Math.min(99,Math.round(a*100))],col('--rd'),6]],xmin:0,xmax:99,ymax:rm*1.05,xl:'Fracción reaccionada α del oro (%)',yl:'dα/dt del grano (% por hora)'});
+ $('n3b').innerHTML=(core?'La resistencia de la matriz pasa de <b>'+sh[0][1].toFixed(0)+' %</b> al inicio a <b>'+sh[90][1].toFixed(0)+' %</b> cuando el grano está al 90 %, y la película baja de '+sh[0][0].toFixed(0)+' % a '+sh[90][0].toFixed(0)+' %. ':'En este modo no hay capa: la película pasa de '+sh[0][0].toFixed(0)+' % a '+sh[90][0].toFixed(0)+' % al 90 % de α. ')+'La velocidad de disolución del grano cae de '+rt[1].toFixed(1)+' %/h (α = 1 %) a '+rt[50].toFixed(1)+' %/h (α = 50 %) y '+rt[90].toFixed(1)+' %/h (α = 90 %): por eso los últimos tanques aportan poco.';
+ // 4. diagnóstico
+ const D=diag(o),ctrl=mx>.55?names[dom]:'varias etapas a la vez',nx=k=>o.nexp[k]==null?'–':o.nexp[k].toFixed(2);
+ $('tb3d').innerHTML='<tr><th>Etapa que controla</th><th>Energía de activación típica</th><th>Efecto de agitar más</th><th>n típico (t ∝ r₀ⁿ)</th><th>n en tu simulación</th></tr>'+
+  `<tr><td>Película límite</td><td>≤ 20 kJ/mol</td><td>Acelera</td><td>1 – 1,6</td><td>${nx('Película')}</td></tr><tr><td>Reacción en la interfaz</td><td>40 – 400 kJ/mol</td><td>No cambia</td><td>1</td><td>${nx('Reacción superficial')}</td></tr>`+(core?`<tr><td>Difusión en la matriz</td><td>intermedia</td><td>No cambia</td><td>2</td><td>${nx('Difusión en matriz')}</td></tr>`:'')+
+  `<tr><td><b>Tu proceso hoy (combinado)</b></td><td><b>${D.Ea==null?'–':D.Ea.toFixed(0)+' kJ/mol'}</b> (O₂ constante)<br>${D.Ea2==null?'–':D.Ea2.toFixed(0)+' kJ/mol'} (con O₂ real)</td><td><b>${D.ag==null?'–':'×2 rpm → '+(D.ag>=0?'+':'')+D.ag.toFixed(0)+' %'}</b></td><td>–</td><td><b>${nx('Combinado')}</b></td></tr>`;
+ $('n3d').innerHTML='Los valores típicos de energía de activación son los del cap. 6.4 (reacciones interfaciales 40–400 kJ/mol; difusión en fases fluidas ≤ 20 kJ/mol; sólidos porosos, intermedia). En tu simulación predomina <b>'+ctrl+'</b>: '+(D.Ea!=null&&D.ag!=null?(D.Ea<25&&D.ag>10?'poca energía de activación y sensibilidad a la agitación apuntan a la película.':D.Ea>40&&D.ag<5?'alta energía de activación e insensibilidad a la agitación apuntan a la reacción química.':'la mezcla de señales (energía intermedia, agitación con efecto moderado o nulo) es típica de control mixto o por la matriz.'):'')+' La segunda energía es menor porque el oxígeno disuelto baja al subir la temperatura: calentar la pulpa gana poco. Con tus ensayos reales de temperatura, agitación y tamaño podrás confirmar cuál es.';
+ // 5. tamaño y forma
+ const t2=Array.from({length:o.Nn+1},(_,i)=>i*v.t/o.Nn),sD=o.batch.cl.map(c=>({x:o.t,y:Array.from(c.x,q=>q*100),c:col('--ac'),w:1,a:.28}));
+ sD.push({x:t2,y:Array.from(o.sp.x,q=>q*100),c:col('--ac2'),dash:1,w:2.4,n:'Un solo tamaño (P80)'});sD.push({x:o.t,y:Array.from(o.batch.x,q=>q*100),c:col('--ac'),w:3,n:'Distribución de tamaños'});
+ plot($('cv3d'),{s:sD,xmax:v.t,ymax:100,legBR:1,xl:'Tiempo (h)',yl:'Conversión del oro accesible (%)'});
+ const tau=Array.from({length:101},(_,i)=>i/100);
+ plot($('cv3e'),{s:[[1,'Placa (n = 1)','--ac2'],[2,'Cilindro largo (n = 2)','--ok'],[3,'Esfera (n = 3)','--rd']].map(([n,l,c])=>({x:tau,y:tau.map(u=>100*(1-Math.pow(1-u,n))),c:col(c),n:l})),xmax:1,ymax:100,legBR:1,xl:'Tiempo adimensional τ = k·t/(ρ·r₀)',yl:'Fracción reaccionada α (%)'});
+ const tm=(arr,N,T,fr)=>{const q=tAt(arr,N,T,fr);return q==null?'>'+T.toFixed(0)+' h':q.toFixed(1)+' h'};
+ $('n3e').innerHTML='<b>Izquierda:</b> las curvas finas son las 8 clases de tamaño del simulador. El P80 es más grueso que el promedio, así que un solo tamaño P80 llega al 90 % en <b>'+tm(o.sp.x,o.Nn,v.t,.9)+'</b> y la distribución en <b>'+tm(o.batch.x,o.N,v.t,.9)+'</b>; pero el último tramo lo dominan los granos gruesos: al 99 %, <b>'+tm(o.sp.x,o.Nn,v.t,.99)+'</b> frente a <b>'+tm(o.batch.x,o.N,v.t,.99)+'</b>. <b>Derecha:</b> con la misma k y r₀, la geometría cambia el ritmo (Ec. 3.17). Para la misma masa y densidad, un cubo tarda ≈ 0,81 veces lo que tarda una esfera (Ej. 3.1): los granos laminares o angulosos se disuelven más rápido que los redondeados.'}
+// ---------- pestaña 5: Arrhenius (cap. 1) ----------
+let ES5={},ea5Init=false,TS=null,TSk='';
+const itp=(xs,ys,x)=>{if(x<=xs[0])return ys[0];for(let i=1;i<xs.length;i++)if(x<=xs[i])return ys[i-1]+(ys[i]-ys[i-1])*(x-xs[i-1])/(xs[i]-xs[i-1]);return ys[ys.length-1]};
+const lreg=(xs,ys)=>{const n=xs.length,mx=xs.reduce((a,b)=>a+b)/n,my=ys.reduce((a,b)=>a+b)/n;let sxy=0,sxx=0,syy=0;xs.forEach((x,i)=>{sxy+=(x-mx)*(ys[i]-my);sxx+=(x-mx)**2;syy+=(ys[i]-my)**2});const sl=sxy/sxx;return{sl,ic:my-sl*mx,r2:syy>0?sxy*sxy/(sxx*syy):1}};
+const q10=(E,T1)=>Math.exp(E*1e3/Rg*(1/(T1+273.15)-1/(T1+283.15)));
+const dTd=(E,T1)=>{const d=1/(T1+273.15)-Rg*Math.LN2/(E*1e3);return d>0?1/d-(T1+273.15):Infinity};
+const kind=E=>E<20?'película (difusión en el líquido)':E<=40?'la matriz o un control mixto':'la reacción química en la interfaz';
+function stageSp(o,Ts){const v=o.v,X=o.X,Rm=v.d*1e-6/2,k=X.mode==='core',o2=o.e1.o2;
+ return Ts.map(T=>{const e2=env({...v,T},X,o2),f2=film(Rm,e2),b=bst*f2.Ce/rhoB,vf=b*f2.kc,vr=b*e2.ks,va=k?b*e2.De/(Rm/4):1e12;return{T,vf,vr,va,ve:1/(1/vf+1/vr+(k?1/va:0))}})}
+function tempStudy(o){const key=JSON.stringify([V,getX()]);if(TS&&key===TSk)return TS;
+ const v=o.v,X=o.X,d=v.d*1e-6,o2c=o.e1.o2,Ts=[5,10,15,20,25,30,35,40,45,50,55,60],g=q=>q==null?300:q,ref=g(t90of(d,o.e1,X,ALL));
+ const ic=Ts.map(T=>ref/g(t90of(d,env({...v,T},X,o2c),X,ALL))),ir=Ts.map(T=>{const vv={...v,T};return ref/g(t90of(d,env(vv,X,o2At(vv,X)),X,ALL))}),cs=Ts.map(T=>aer({...v,T},X).Cs);
+ TS={Ts,ic,ir,cs};TSk=key;return TS}
+function drawBarrier(cv,E){const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;const dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;
+ const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ const m={l:46,r:14,t:16,b:40},pw=W-m.l-m.r,ph=H-m.t-m.b,dG0=Math.min(40,Math.max(8,E*.5)),y0=-(dG0+22),y1=Math.max(70,E*1.45),Y=e=>m.t+ph*(1-(e-y0)/(y1-y0)),X=u=>m.l+u*pw,dG=Math.min(40,Math.max(8,E*.5));
+ const prof=(h,u)=>(h+.12*dG)*Math.exp(-Math.pow((u-.5)/.13,2))-dG/(1+Math.exp(-(u-.62)/.06));
+ x.strokeStyle=col('--bd');x.lineWidth=1;x.fillStyle=col('--mu');x.font='11px system-ui';x.textAlign='right';
+ [0,25,50,75,100,125,150].filter(e=>e<y1).forEach(e=>{x.beginPath();x.moveTo(m.l,Y(e));x.lineTo(W-m.r,Y(e));x.stroke();x.fillText(e,m.l-6,Y(e)+4)});
+ x.textAlign='center';x.fillText('Avance de la reacción →',m.l+pw/2,H-8);x.save();x.translate(12,m.t+ph/2);x.rotate(-Math.PI/2);x.fillText('Energía libre (kJ/mol)',0,0);x.restore();
+ const curve=(h,c,dash,w)=>{x.beginPath();x.setLineDash(dash?[6,4]:[]);x.strokeStyle=c;x.lineWidth=w;for(let i=0;i<=120;i++){const u=i/120;i?x.lineTo(X(u),Y(prof(h,u))):x.moveTo(X(u),Y(prof(h,u)))}x.stroke();x.setLineDash([])};
+ curve(E*.6,col('--ok'),1,2);curve(E,col('--ac'),0,3.4);
+ x.strokeStyle=col('--tx');x.fillStyle=col('--tx');x.lineWidth=1.8;const px=X(.5),ya=Y(0),yb=Y(E);x.beginPath();x.moveTo(px,ya);x.lineTo(px,yb);x.stroke();
+ [[yb,1],[ya,-1]].forEach(([yy,d])=>{x.beginPath();x.moveTo(px,yy);x.lineTo(px-5,yy+d*9);x.lineTo(px+5,yy+d*9);x.fill()});
+ x.font='600 13px system-ui';x.textAlign='center';x.fillText('E = '+E.toFixed(0)+' kJ/mol',px,yb-9);
+ x.fillStyle=col('--rd');x.fillText('ΔG < 0',X(.8),Y(-dG)+(-dG>-12?16:-8));
+ x.fillStyle=col('--mu');x.font='12px system-ui';x.fillText('Au + CN⁻ + O₂',X(.02),Y(0)-8);x.textAlign='right';x.fillText('Au(CN)₂⁻',W-m.r-2,Y(-dG)-8);
+ x.fillStyle=col('--ok');x.textAlign='left';x.fillText('con activador',X(.64),Y(E*.6)+4)}
+function renderP5(o){
+ const v=o.v,X=o.X,core=X.mode==='core',T0=v.T;
+ const Ts=[];for(let T=5;T<=60;T+=2.5)Ts.push(T);const sp=stageSp(o,Ts),b0=stageSp(o,[T0])[0];
+ const ln=k=>sp.map(s=>Math.log(s[k])),ET=k=>-Rg*lreg(sp.map(s=>1/(s.T+273.15)),ln(k)).sl/1000,Ef=ET('vf'),Er=ET('vr'),Ea=core?ET('va'):null;
+ const seg=(a,b)=>Rg*Math.log(sp[b].ve/sp[a].ve)/(1/(sp[a].T+273.15)-1/(sp[b].T+273.15))/1000,loc=stageSp(o,[T0-5,T0+5]),Eef=Rg*Math.log(loc[1].ve/loc[0].ve)/(1/(loc[0].T+273.15)-1/(loc[1].T+273.15))/1000;
+ ES5={f:Ef,r:Er,a:Ea,ef:Eef};
+ const bl=[['Película',Ef],['Reacción',Er],...(core?[['Matriz',Ea]]:[]),['Tu proceso',Eef]];
+ $('bt5').innerHTML=bl.map(([n,e])=>`<button data-e="${e.toFixed(1)}">${n} · ${e.toFixed(0)} kJ/mol</button>`).join('');
+ document.querySelectorAll('#bt5 button').forEach(b=>b.onclick=()=>{$('ea5').value=b.dataset.e;if(!anim)render(RES,1)});
+ if(!ea5Init){$('ea5').value=Math.round(Eef);ea5Init=true}
+ const E=+$('ea5').value;$('ea5v').textContent=E.toFixed(0);
+ // 1. barrera y fracción de moléculas
+ drawBarrier($('cv5a'),E);
+ const Es=[];for(let e=0;e<=120;e+=4)Es.push(e);const lf=(e,T)=>-e/(0.008314*(T+273.15)*Math.LN10),cT=[[T0-10,'--ac2'],[T0,'--ac'],[T0+10,'--rd']];
+ plot($('cv5b'),{s:cT.map(([T,c],i)=>({x:Es,y:Es.map(e=>lf(e,T)),c:col(c),w:i===1?3.2:2,dash:i!==1,n:T.toFixed(0)+' °C'})),pts:cT.map(([T,c])=>[E,lf(E,T),col(c),5]),xmin:0,xmax:120,ymin:Math.floor(lf(120,T0-10))-1,ymax:0,xl:'Energía de activación E (kJ/mol)',yl:'log₁₀ de la fracción con energía ≥ E'});
+ const fr=Math.exp(-E*1e3/(Rg*(T0+273.15))),fq=q10(E,T0),dd=dTd(E,T0),cell=(l,x)=>`<div>${l}<b>${x}</b></div>`;
+ $('m5a').innerHTML=cell('Fracción con energía suficiente, e<sup>−E/RT</sup>',fr<1e-3?fr.toExponential(1):fr.toFixed(3))+cell('Aceleración al subir 10 °C','×'+fq.toFixed(2))+cell('Grados para duplicar la velocidad',isFinite(dd)?dd.toFixed(0)+' °C':'–')+cell('Tipo de etapa con esta E',kind(E).split(' (')[0]);
+ $('n5a').innerHTML='Con E = <b>'+E.toFixed(0)+' kJ/mol</b> a '+T0+' °C solo una de cada <b>'+(1/fr).toExponential(1)+'</b> moléculas tiene energía suficiente. Al calentar 10 °C esa fracción se multiplica por <b>'+fq.toFixed(2)+'</b>. Las rectas del panel derecho se separan más cuanto mayor es E: <b>las barreras altas son las más sensibles a la temperatura</b>. Esta energía es típica de '+kind(E)+'.';
+ // 2. Arrhenius por etapa
+ const rel=k=>sp.map(s=>s[k]/b0[k]),ix=sp.map(s=>1000/(s.T+273.15)),sl=[['vf','Película','--ac2',Ef],['vr','Reacción','--rd',Er],...(core?[['va','Matriz','--ok',Ea]]:[]),['ve','Efectiva (serie)','--ac',Eef]];
+ const ymx=Math.max(...sl.map(([k])=>Math.max(...rel(k))))*1.05;
+ plot($('cv5c'),{s:sl.map(([k,n,c])=>({x:Ts,y:rel(k),c:col(c),n,dash:k!=='ve'&&k!=='vf',w:k==='ve'?3.4:2})),pts:[[T0,1,col('--tx'),5]],xmin:5,xmax:60,xticks:[10,20,30,40,50,60],ymin:0,ymax:ymx,legL:1,xl:'Temperatura (°C)',yl:'Velocidad relativa a la de '+T0+' °C'});
+ const rv=a=>a.slice().reverse();
+ plot($('cv5d'),{s:sl.map(([k,n,c])=>({x:rv(ix),y:rv(sp.map(s=>Math.log(s[k]/b0[k]))),c:col(c),n,dash:k!=='ve'&&k!=='vf',w:k==='ve'?3.4:2})),pts:[[1000/(T0+273.15),0,col('--tx'),5]],xmin:Math.min(...ix),xmax:Math.max(...ix),legBR:1,xl:'1000 / T (K⁻¹)',yl:'ln (velocidad relativa)'});
+ $('tb5').innerHTML='<tr><th>Etapa</th><th>E aparente (kJ/mol)</th><th>Dato de entrada</th><th>Aceleración por +10 °C</th><th>Grados para duplicar</th></tr>'+[['Película',Ef,'calculado (difusión)'],['Reacción en la interfaz',Er,(X.Eas/1000).toFixed(0)+' kJ/mol'],...(core?[['Matriz',Ea,(X.Ead/1000).toFixed(0)+' kJ/mol']]:[]),['<b>Efectiva (serie)</b>',Eef,'–']].map(([n,e,i])=>`<tr><td>${n}</td><td>${e.toFixed(1)}</td><td>${i}</td><td>×${q10(e,T0).toFixed(2)}</td><td>${dTd(e,T0).toFixed(0)} °C</td></tr>`).join('');
+ const Elo=seg(0,4),Ehi=seg(16,22);
+ $('n5b').innerHTML='Las etapas individuales son casi rectas: su pendiente es −E/R. '+(Math.abs(Elo-Ehi)>3?'La curva efectiva se dobla: su E aparente pasa de <b>'+Elo.toFixed(0)+' kJ/mol</b> entre 5 y 15 °C a <b>'+Ehi.toFixed(0)+' kJ/mol</b> entre 45 y 60 °C, porque cambia la etapa que manda (Fig. 1.5). ':'Con tus valores la curva efectiva también es casi recta (E aparente de <b>'+Elo.toFixed(0)+'</b> a <b>'+Ehi.toFixed(0)+' kJ/mol</b> en todo el rango) porque la etapa que manda no cambia; si cambiaras k<sub>s</sub> o D<sub>e</sub> para que dos etapas pesen igual, la recta se doblaría (Fig. 1.5). ')+'La E aparente de la reacción y de la matriz difiere un poco del dato de entrada porque el reactivo efectivo (Elsner) también cambia con la temperatura.';
+ // 3. reparto del control con T
+ const shr=sp.map(s=>{const a=1/s.vf,b=core?1/s.va:0,c=1/s.vr,t=a+b+c;return[a/t*100,b/t*100,c/t*100]});
+ const s3=[{x:Ts,y:shr.map(q=>q[0]),c:col('--ac2'),n:'Película'},{x:Ts,y:shr.map(q=>q[2]),c:col('--rd'),n:'Reacción'}];if(core)s3.splice(1,0,{x:Ts,y:shr.map(q=>q[1]),c:col('--ok'),n:'Matriz'});
+ s3.push({x:[T0,T0],y:[0,100],c:col('--mu'),dash:1,w:1.3});
+ plot($('cv5e'),{s:s3,xmin:5,xmax:60,xticks:[10,20,30,40,50,60],ymax:100,legL:1,xl:'Temperatura (°C)',yl:'Peso de cada etapa en la resistencia (%)'});
+ const nm=['película','matriz','reacción'],dm=q=>q.indexOf(Math.max(...q)),a5=shr[0],a60=shr[shr.length-1];
+ $('n5c').innerHTML=(dm(a5)===dm(a60)?'En todo el rango de temperatura manda <b>'+nm[dm(a5)]+'</b> ('+Math.max(...a5).toFixed(0)+' % a 5 °C, '+Math.max(...a60).toFixed(0)+' % a 60 °C). ':'A 5 °C manda <b>'+nm[dm(a5)]+'</b> ('+Math.max(...a5).toFixed(0)+' %) y a 60 °C manda <b>'+nm[dm(a60)]+'</b> ('+Math.max(...a60).toFixed(0)+' %). ')+'La película, que tiene la energía de activación más baja, pasa de '+a5[0].toFixed(0)+' % a '+a60[0].toFixed(0)+' % del control al calentar: lo que menos se acelera con la temperatura va ganando peso. Por eso calentar sirve mientras manda una etapa de energía alta, y deja de servir cuando domina una difusión.';
+ // 4. temperatura y oxígeno
+ const S=tempStudy(o),M=Math.max(...S.ir,...S.ic)*1.1,iOpt=S.ir.indexOf(Math.max(...S.ir));
+ plot($('cv5f'),{s:[{x:S.Ts,y:S.ic,c:col('--ac2'),dash:1,w:2,n:'O₂ constante (solo cinética)'},{x:S.Ts,y:S.ir,c:col('--ac'),w:3.2,n:'O₂ real (baja con la T)'}],pts:[[T0,itp(S.Ts,S.ir,T0),col('--rd'),6]],xmin:5,xmax:60,xticks:[10,20,30,40,50,60],ymin:0,ymax:M,legL:1,xl:'Temperatura (°C)',yl:'Rapidez de disolución del grano (1/t₉₀, a '+T0+' °C = 1)'});
+ $('n5d').innerHTML='El oxígeno de saturación baja de <b>'+S.cs[0].toFixed(1)+' mg/L</b> a 5 °C a <b>'+S.cs[S.cs.length-1].toFixed(1)+' mg/L</b> a 60 °C. '+(iOpt>0&&iOpt<S.Ts.length-1?'En tu proceso la rapidez real alcanza un máximo cerca de <b>'+S.Ts[iOpt]+' °C</b> y después baja. ':'En tu proceso la rapidez real sigue subiendo con la temperatura, pero menos que con O₂ constante. ')+'A 45 °C la rapidez es <b>×'+itp(S.Ts,S.ir,45).toFixed(2)+'</b> la de '+T0+' °C con el O₂ real, frente a ×'+itp(S.Ts,S.ic,45).toFixed(2)+' si el O₂ no cambiara. Calentar la pulpa gana poco y cuesta energía; subir el oxígeno disuelto rinde más (ver la pestaña Capa límite).';
+ const A=+$('fl5').value;$('fl5v').textContent=A;let sc=0,sr=0;const NN=72,Ec=diag(o).Ea||Eef;
+ for(let i=0;i<NN;i++){const T=T0+A*Math.sin(2*Math.PI*i/NN);sc+=Math.exp(Ec*1e3/Rg*(1/(T0+273.15)-1/(T+273.15)));sr+=itp(S.Ts,S.ir,T)}
+ const rc=(sc/NN-1)*100,rr_=(sr/NN/itp(S.Ts,S.ir,T0)-1)*100;
+ $('n5f').innerHTML='Con una variación de <b>± '+A+' °C</b> alrededor de '+T0+' °C, la velocidad media difiere de la de temperatura constante en <b>'+(rc>=0?'+':'')+rc.toFixed(2)+' %</b> (con O₂ constante) y en <b>'+(rr_>=0?'+':'')+rr_.toFixed(2)+' %</b> (con O₂ real). Como la curva exponencial es convexa, fluctuar da algo más que la media, pero con barreras bajas como la tuya (E ≈ '+Ec.toFixed(0)+' kJ/mol) la diferencia es mínima: no necesitas controlar las oscilaciones diarias de temperatura.';
+ // 5. ajuste con ensayos
+ const rows=$('arr_data').value.split('\n').map(l=>l.split(/[,;\s]+/).map(Number)).filter(a=>a.length>=2&&isFinite(a[0])&&a[1]>0);
+ if(rows.length<2){$('m5e').innerHTML='';$('n5e').textContent='Se necesitan al menos 2 pares «temperatura, k» con k > 0.'}
+ else{const xs=rows.map(r=>1/(r[0]+273.15)),ys=rows.map(r=>Math.log(r[1])),f=lreg(xs,ys),Ee=-f.sl*Rg/1000,Tp=+$('arr_T').value,kp=Math.exp(f.ic+f.sl/(Tp+273.15)),X1=xs.map(q=>q*1000),xa=Math.min(...X1)-.03,xb=Math.max(...X1)+.03;
+  plot($('cv5g'),{s:[{x:[xa,xb],y:[f.ic+f.sl*xa/1000,f.ic+f.sl*xb/1000],c:col('--ac'),w:2.6,n:'Recta de Arrhenius'}],pts:[...X1.map((q,i)=>[q,ys[i],col('--ac2'),5]),[1000/(Tp+273.15),Math.log(kp),col('--rd'),6]],xmin:xa,xmax:xb,legL:1,ymin:Math.min(...ys,Math.log(kp))-.2,ymax:Math.max(...ys,Math.log(kp))+.2,xl:'1000 / T (K⁻¹)',yl:'ln k'});
+  $('m5e').innerHTML=cell('Energía de activación E',Ee.toFixed(1)+' kJ/mol')+cell('Factor A',Math.exp(f.ic).toExponential(2))+cell('R² del ajuste',f.r2.toFixed(3))+cell('k a '+Tp+' °C',kp.toPrecision(3))+cell('Aceleración por +10 °C','×'+q10(Ee,T0).toFixed(2))+cell('Grados para duplicar',dTd(Ee,T0).toFixed(0)+' °C');
+  $('n5e').innerHTML='Con tus '+rows.length+' ensayos la energía de activación es <b>'+Ee.toFixed(1)+' kJ/mol</b>, típica de <b>'+kind(Ee)+'</b>. El simulador da hoy E<sub>ef</sub> = '+Eef.toFixed(1)+' kJ/mol (con O₂ constante '+(diag(o).Ea||0).toFixed(0)+' kJ/mol): '+(Math.abs(Ee-Eef)<8?'son parecidas, buena señal.':Ee>Eef?'tu proceso real es más sensible a la temperatura que el modelo: sube E<sub>s</sub> o revisa si controla la reacción.':'tu proceso real es menos sensible a la temperatura que el modelo: es probable que domine una difusión (película o matriz); baja E<sub>s</sub>.')+' '+(f.r2<.9?'<b>R² bajo:</b> los puntos no forman una recta; puede haber cambio de etapa controlante entre las temperaturas.':'')}
+ // 6. tabla de sensibilidad
+ const Tt=[5,15,25,40,60],Et=[10,20,30,50,80],nr=Tt.reduce((a,b)=>Math.abs(b-T0)<Math.abs(a-T0)?b:a),ne=Et.reduce((a,b)=>Math.abs(b-Eef)<Math.abs(a-Eef)?b:a);
+ $('tb5t').innerHTML='<tr><th>T (°C) \\ E</th>'+Et.map(e=>`<th>${e} kJ/mol</th>`).join('')+'</tr>'+Tt.map(T=>'<tr><td>'+T+' °C</td>'+Et.map(e=>`<td${T===nr&&e===ne?' style="background:var(--bg);font-weight:600"':''}>×${q10(e,T).toFixed(2)} <i>· ${dTd(e,T).toFixed(0)} °C</i></td>`).join('')+'</tr>').join('');
+ $('n5t').innerHTML='Cada celda: aceleración por +10 °C y grados necesarios para duplicar la velocidad. La celda destacada es la más cercana a tu proceso (E ≈ '+Eef.toFixed(0)+' kJ/mol a '+T0+' °C): subir 10 °C solo acelera ×'+q10(Eef,T0).toFixed(2)+'. A igual E, la sensibilidad es mayor a baja temperatura (Conclusión 2 del capítulo 1).'}
+function render(o,f){if(!o)return;const v=o.v,tc=v.t*f,tau=o.tau;
+ // interpolación sobre la salida de los tanques
+ const tk=[0,...o.rec],fi=Math.min(3.999,f*4),j=Math.floor(fi),Rl=tk[j]+(tk[j+1]-tk[j])*(fi-j),au=o.auFeed*Rl/100;
+ const ax=[0,...o.xs],aI=ax[j]+(ax[j+1]-ax[j])*(fi-j);
+ const cn=cons(v,Rl,au/o.cap),regs=Object.entries(o.t90).filter(([k])=>k!=='Combinado');
+ let reg='',mx=-1;regs.forEach(([k,t])=>{const tt=t==null?1e9:t;if(tt>mx){mx=tt;reg=k}});
+ $('kR').textContent=Rl.toFixed(1)+' %';$('kG').textContent=(V.rc+(100-V.rc)*Rl/100).toFixed(1)+' %';
+ $('kN').textContent=cn.nacn.toFixed(2)+' kg/t';$('kC').textContent=cn.cao.toFixed(2)+' kg/t';$('kA').textContent=au.toFixed(1)+' g/d';
+ $('kReg').textContent=reg;$('kQ').textContent=o.cap.toFixed(1)+' t/d';$('kD').textContent=o.ej[0].DO.toFixed(1)+' mg/L';
+ // 1
+ renderP1(o,f);
+ // 2
+ const e=o.e1,R=v.d*1e-6/2,fi0=film(R,e),Ce=fi0.Ce,k=o.X.mode==='core',tt=o.t,C=c=>col(c);
+ if(TAB==='p2')renderP2(o,f,aI);
+ // 3
+ if(TAB==='p3')renderP3(o,f,aI);
+ // 4
+ const e0=o.e1;if(TAB==='p4')renderP4(o);
+ // 5
+ if(TAB==='p5')renderP5(o);
+}
+function live(){if(anim)return;RES=compute(V);render(RES,1)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.pn').forEach(p=>p.classList.toggle('on',p.id===b.dataset.t));TAB=b.dataset.t;render(RES,1)});
+$('al3').oninput=()=>{if(!anim)render(RES,1)};document.querySelectorAll('#p3 .bt3 button').forEach(b=>b.onclick=()=>{if(anim||!RES)return;$('al3').value=Math.min(.99,[0,...RES.xs][+b.dataset.a]);render(RES,1)});
+$('ea5').oninput=$('fl5').oninput=$('arr_data').oninput=$('arr_T').oninput=()=>{if(!anim)render(RES,1)};$('arr_b').onclick=()=>{if(!anim)render(RES,1)};
+$('rp4').oninput=()=>setV('eps',epsOf(+$('rp4').value));$('T4').oninput=()=>setV('T',+$('T4').value);$('cn4').oninput=()=>setV('cn',+$('cn4').value);
+$('al').oninput=$('zz').oninput=$('cmpv').onchange=()=>{if(!anim)render(RES,1)};
+document.querySelectorAll('#p2 .bt button').forEach(b=>b.onclick=()=>{if(anim||!RES)return;$('al').value=Math.min(.99,[0,...RES.xs][+b.dataset.a]);render(RES,1)});
+function parsePts(){pts=$('data').value.split('\n').map(l=>l.split(/[,;\s]+/).map(Number)).filter(a=>a.length>=2&&isFinite(a[0])&&isFinite(a[1]))}
+$('run').onclick=()=>{cancelAnimationFrame(anim);parsePts();RES=compute(V);const t0=performance.now(),dur=4000;
+ const st=n=>{const f=Math.max(0,Math.min(1,(n-t0)/dur));render(RES,f);if(f<1)anim=requestAnimationFrame(st);else{anim=null;prev={t:RES.t,y:RES.brec,T:V.t}}};anim=requestAnimationFrame(st)};
+$('reset').onclick=()=>{cancelAnimationFrame(anim);anim=null;prev=null;document.querySelectorAll('.row').forEach(r=>r.reset&&r.reset());document.querySelectorAll('[data-def]').forEach(e=>e.value=e.dataset.def);$('al').value=.4;$('zz').value=1;$('al3').value=.5;ea5Init=false;parsePts();live()};
+// ajuste del ensayo batch: k_s (búsqueda log) + Au accesible (mínimos cuadrados lineal)
+$('fitb').onclick=()=>{parsePts();const d=pts.filter(p=>p[0]>0);if(d.length<3){$('fit').textContent='Se requieren al menos 3 puntos.';return}
+ const g=i=>+$('f_'+i).value,rv={cn:g('cn'),ph:g('ph'),d:g('d'),T:g('T'),s:g('s')},T=Math.max(...d.map(p=>p[0])),N=240,X0=getX();
+ const ev=lk=>{const X={...X0,ks:Math.pow(10,lk)},e=env(rv,X,g('do')/32),r=runSet(rv,X,e,ALL,N,T);
+  const m=d.map(p=>r.x[Math.min(N,Math.round(p[0]/T*N))]),a=Math.min(1,Math.max(.01,d.reduce((s,p,i)=>s+p[1]/100*m[i],0)/d.reduce((s,_,i)=>s+m[i]*m[i],0)));
+  return{a,e:d.reduce((s,p,i)=>s+(p[1]/100-a*m[i])**2,0)}};
+ let lo=-7,hi=-1,b={lk:-3,a:.9,e:1e9};
+ for(let it=0;it<4;it++){for(let i=0;i<=24;i++){const lk=lo+(hi-lo)*i/24,r=ev(lk);if(r.e<b.e)b={lk,...r}}const w=(hi-lo)/6;lo=b.lk-w;hi=b.lk+w}
+ const mean=d.reduce((s,p)=>s+p[1]/100,0)/d.length,sst=d.reduce((s,p)=>s+(p[1]/100-mean)**2,0);
+ $('ks').value=Math.pow(10,b.lk).toExponential(2);$('xmax').value=(b.a*100).toFixed(1);
+ $('fit').textContent=`Ajuste: k_s = ${Math.pow(10,b.lk).toExponential(2)} m/s · Au accesible = ${(b.a*100).toFixed(1)} % · R² = ${(1-b.e/sst).toFixed(4)}`;live()};
+// ---------- ecuaciones tipográficas (mini compositor TeX → HTML/CSS, sin dependencias) ----------
+const GR={geq:'≥',partial:'∂',alpha:'α',beta:'β',delta:'δ',Delta:'Δ',rho:'ρ',tau:'τ',nu:'ν',varepsilon:'ε',varphi:'φ',pi:'π',mu:'μ',sigma:'σ',cdot:'·',times:'×',approx:'≈',Rightarrow:'⇒',propto:'∝',infty:'∞',
+ ln:'<span class="tx">ln</span>',exp:'<span class="tx">exp</span>',max:'<span class="tx">max</span>',
+ quad:'<span class="sp2"></span>',qquad:'<span class="sp2" style="width:2.4em"></span>'};
+function tex(s){let i=0;
+ const atom=c=>/[0-9.()\[\]]/.test(c)?`<span class="n">${c}</span>`:'=+−<>⇒≈'.includes(c)?`<span class="o">${c}</span>`:c==='-'?'<span class="o">−</span>':c;
+ const raw=()=>{i++;let r='';while(s[i]!=='}')r+=s[i++];i++;return r};
+ const grp=()=>{if(s[i]==='{'){i++;const r=seq();i++;return r}return atom(s[i++])};
+ function seq(){let o='';while(i<s.length&&s[i]!=='}'){const c=s[i];
+  if(c==='\\'){i++;let n='';while(/[a-zA-Z]/.test(s[i]||''))n+=s[i++];
+   if(!n){const d=s[i++];o+=d===','?'<span class="sp2" style="width:.18em"></span>':d;continue}
+   if(n==='frac'){const a=grp(),b=grp();o+=`<span class="fr"><span class="nu">${a}</span><span class="de">${b}</span></span>`}
+   else if(n==='sqrt'){o+=`<span class="sq">√<span class="rd">${grp()}</span></span>`}
+   else if(n==='bar'){o+=`<span class="ov">${grp()}</span>`}
+   else if(n==='text'){o+=`<span class="tx">${raw()}</span>`}
+   else if(n==='big'||n==='left'||n==='right'){o+=`<span class="bg">${s[i++]}</span>`}
+   else o+=GR[n]||n}
+  else if(c==='^'||c==='_'){i++;const a=grp();let b=null;
+   if(s[i]==='^'||s[i]==='_'){const c2=s[i];if(c2!==c){i++;b=grp()}}
+   const up=c==='^'?a:b,dn=c==='_'?a:b;
+   o+=(up!=null&&dn!=null)?`<span class="ss"><sup>${up}</sup><sub>${dn}</sub></span>`:c==='^'?`<sup>${a}</sup>`:`<sub>${a}</sub>`}
+  else if(c==='{'){i++;o+=seq();i++}
+  else if(c===' '){i++}
+  else{i++;o+=atom(c)}}return o}
+ return seq()}
+const EQ={
+p1:{t:'Ecuaciones: reactores en serie y aireación (cap. 3 y 6)',i:[
+['s','',String.raw`\tau=\frac{V}{Q}\qquad t_{\text{total}}=n\,\tau`,'Tiempo de residencia: cada tanque de volumen V (30 m³) recibe el caudal de pulpa Q; el «tiempo de lixiviación» del panel es el total de los n tanques.'],
+['s','',String.raw`E(t)=\frac{t^{\,n-1}\,e^{-t/\tau}}{(n-1)!\,\tau^{n}}`,'Distribución de tiempos de residencia de n tanques de mezcla completa en serie (teoría de reactores; no es del libro). Con n = 1 parte de la pulpa sale casi de inmediato; al aumentar n el tren se acerca a un reactor pistón.'],
+['s','',String.raw`0=\frac{p_{\text{ent},i}-p_i}{\tau}+\frac{v_{i-1}\,p_{i-1}-v_i\,p_i}{h}`,'Balance de partículas en cada tanque, que es lo que resuelve el simulador: las partículas entran, avanzan en su grado de reacción a velocidad v = dα/dt y salen con tiempo medio τ. Equivale a integrar la ecuación del grano con la distribución anterior.'],
+['k','',String.raw`R_{\text{lix}}=X_{\max}\cdot\bar{X}_n\qquad R_{\text{global}}=R_{\text{grav}}+(1-R_{\text{grav}})\,R_{\text{lix}}`,'La recuperación de la lixiviación es el oro accesible por la conversión media a la salida del último tanque; la global suma la fracción ya recuperada en el Knelson.'],
+['s','6.10',String.raw`U_{\infty}=0.72\sqrt{g\,d_e}`,'Velocidad terminal de una burbuja de aire (casquete esférico) de diámetro equivalente d<sub>e</sub> que sube por la pulpa.'],
+['s','6.12',String.raw`K_L=\frac{D}{d_e}\left(2+0.55\,\text{Re}^{1/2}\,\text{Sc}^{1/2}\right)`,'Coeficiente de transferencia de O₂ del aire al líquido, en función de los números de Reynolds y Schmidt de la burbuja.'],
+['s','6.20',String.raw`a_b=\frac{3\,F\,\tau_{r}}{r_b}\qquad \tau_{r}=\frac{H}{U}`,'Área interfacial de las burbujas por tanque, con caudal de aire F, radio de burbuja r<sub>b</sub> y tiempo de residencia τ<sub>r</sub> en la altura H.'],
+['k','',String.raw`C_{\text{O}_{2}}=C_{\text{sat}}-\frac{\text{OUR}}{K_L\,a}`,'Oxígeno disuelto en estado estacionario: el aporte del aire, K<sub>L</sub>·a·(C<sub>sat</sub> − C), iguala la demanda de oxígeno (OUR) de los minerales consumidores. Más aire sube K<sub>L</sub>·a y acerca C a la saturación.']]},
+p2:{t:'Ecuaciones: núcleo sin reaccionar y capa de producto (cap. 3 y 4)',i:[
+['s','',String.raw`-\frac{dr_c}{dt}=\frac{b\,C_{\text{ef}}}{\rho_B\left[\frac{r_c^{2}}{R^{2}k_m}+\frac{r_c(1-r_c/R)}{D_e}+\frac{1}{k_s}\right]}`,'Modelo numérico del simulador: el núcleo de oro de radio r<sub>c</sub> se contrae por la acción en serie de la película (k<sub>m</sub>), la capa de matriz (D<sub>e</sub>) y la reacción superficial (k<sub>s</sub>). Aquí α = 1 − (r<sub>c</sub>/r<sub>0</sub>)³.'],
+['s','4.7 y 4.8',String.raw`\alpha=\frac{r_0^{3}-r_1^{3}}{r_0^{3}}=1-\left(\frac{r_1}{r_0}\right)^{3}\qquad\frac{r_0-r_1}{r_0}=1-(1-\alpha)^{1/3}`,'Fracción de oro disuelto a partir del volumen de la esfera, y radio del núcleo sin disolver r<sub>1</sub>.'],
+['k','3.15',String.raw`1-(1-\alpha)^{1/3}=\frac{k}{\rho\,r_0}\,t`,'Control por reacción química en la interfaz (esfera): el radio disminuye a velocidad constante.'],
+['s','3.17',String.raw`1-(1-\alpha)^{1/n}=k\,t`,'Forma general según la geometría: n = 1 placa, n = 2 cilindro largo y n = 3 esfera.'],
+['k','4.10',String.raw`\left[1-(1-\alpha)^{1/3}\right]^{2}=\frac{k}{r_0^{2}}\,t`,'Ecuación de Jander: ley parabólica adaptada a la esfera, válida solo para grados de reacción pequeños (capa delgada y misma densidad que el reactivo).'],
+['k','4.23',String.raw`1-\frac{2}{3}\alpha-(1-\alpha)^{2/3}=\frac{2\,M\,D\,C}{\beta\,\rho\,r_0^{2}}\,t`,'Crank–Ginstling–Brounshtein: difusión en estado estacionario por una capa esférica, de modo que el área de reacción decreciente queda incluida; la capa conserva el volumen del reactivo (Z = 1). El simulador la reproduce numéricamente (ver verificación en la sección 1).'],
+['s','4.30',String.raw`Z=\frac{1}{\beta}\frac{V_P}{V_R}=\frac{r_2^{3}-r_1^{3}}{r_0^{3}-r_1^{3}}\qquad r_2=\left[Z\,r_0^{3}+r_1^{3}(1-Z)\right]^{1/3}`,'Relación de volúmenes: volumen de la capa sólida residual (matriz o pasivación) formada por unidad de volumen de oro disuelto. Fija el radio exterior r<sub>2</sub> de la partícula.'],
+['k','4.35',String.raw`\frac{[1+(Z-1)\alpha]^{2/3}+(Z-1)(1-\alpha)^{2/3}-Z}{2(1-Z)}=\frac{M_R\,D\,C}{\beta\,\rho_R\,r_0^{2}}\,t`,'Crank–Carter–Valensi: expresión exacta cuando la partícula cambia de volumen. Con Z = 1 se reduce a C–G–B.'],
+['s','',String.raw`g_J=\left[1-(1-\alpha)^{1/3}\right]^{2}\qquad g_{CGB}=1-\frac{2}{3}\alpha-(1-\alpha)^{2/3}\qquad g_{CV}=\frac{[1+(Z-1)\alpha]^{2/3}+(Z-1)(1-\alpha)^{2/3}-Z}{1-Z}`,'Los tres modelos escritos como g(α) = K·t, con la misma constante K = 2MDC/(βρr<sub>0</sub>²). Así se comparan en un eje de tiempo adimensional τ = K·t.'],
+['s','Ej. 4.1',String.raw`g_J\approx g_{CGB}\approx\frac{\alpha^{2}}{9}\qquad g_{CV}\approx Z\,\frac{\alpha^{2}}{9}\qquad(\alpha\to 0)`,'Comportamiento común para α pequeño: es lo que muestra la vista «g(α)/(α²/9)» de la sección 2.'],
+['s','Ej. 4.2',String.raw`t\propto r_0\quad(\text{control químico})\qquad t\propto r_0^{2}\quad(\text{difusión por la capa})`,'Efecto del tamaño de partícula a α fijo: reducir el radio a la mitad divide el tiempo por 2 con control químico y por 4 con difusión en la capa.'],
+['s','5.69',String.raw`\frac{dr}{dt}=-\frac{k_1}{\rho}`,'Con diferencia de concentración constante, el control por película da la misma forma que el control químico (el radio baja linealmente); por eso la cinética sola no identifica el mecanismo.']]},
+p3:{t:'Ecuaciones: interfaz sólido–líquido (cap. 3)',i:[
+['s','',String.raw`S_f=\frac{r_c^{2}}{R^{2}\,k_m}\qquad S_a=\frac{r_c\,(1-r_c/R)}{D_e}\qquad S_r=\frac{1}{k_s}\qquad S=S_f+S_a+S_r`,'Resistencias en serie de la película, la matriz y la reacción (§3.1.2). El paso de mayor resistencia controla; si son comparables hay control mixto.'],
+['k','',String.raw`C_s=C_{\text{ef}}\left(1-\frac{S_f}{S}\right)\qquad C_c=C_{\text{ef}}\,\frac{S_r}{S}`,'Concentración de reactivo en la superficie de la partícula y en la interfaz de reacción: cada caída es proporcional a la resistencia de su tramo, como la tensión en un circuito en serie.'],
+['s','',String.raw`C(r)=C_c+(C_s-C_c)\,\frac{1/r_c-1/r}{1/r_c-1/R}`,'Perfil de concentración dentro de la capa de matriz (difusión esférica en estado pseudo-estacionario).'],
+['s','3.11',String.raw`-\frac{dW}{dt}=k′\,A\,C`,'Control por la reacción en la interfaz: la velocidad es proporcional al área A de la interfaz y a la concentración C del reactivo.'],
+['s','3.12 y 3.13',String.raw`-\frac{dr}{dt}=\frac{k}{\rho}\qquad r_0-r=\frac{k\,t}{\rho}`,'En una esfera el radio disminuye a velocidad constante, aunque el área de reacción vaya decreciendo.'],
+['s','3.14',String.raw`\frac{W}{W_0}=\left(\frac{r}{r_0}\right)^{3}=1-\alpha\qquad\frac{r}{r_0}=(1-\alpha)^{1/3}`,'Relación entre la fracción reaccionada α y el radio del núcleo sin reaccionar.'],
+['k','3.15',String.raw`1-(1-\alpha)^{1/3}=\frac{k}{\rho\,r_0}\,t`,'Ley cinética del núcleo sin reaccionar con control por la interfaz (McKewan).'],
+['s','3.17',String.raw`1-(1-\alpha)^{1/n}=k\,t`,'Forma general según la geometría: n = 1 placa, n = 2 cilindro largo y n = 3 esfera.'],
+['s','3.18 a 3.20',String.raw`\alpha=1-\left(1-\frac{k\,t}{\rho\,r_0}\right)^{3}`,'Conjunto de partículas del mismo tamaño (monodisperso): cada una sigue la misma ley y el conjunto también. No vale con distribución de tamaños; por eso el simulador usa 8 clases.'],
+['s','3.26',String.raw`-\frac{dn_c}{dt}=\frac{4\pi r^{2}\,D\,(C-C_s)}{\sigma\,\delta}`,'Si lo lento fuera el transporte por la película con C<sub>s</sub> ≈ 0 y C constante, la velocidad también es proporcional al área y resulta la misma ley 3.15: hay que mirar la energía de activación para distinguirlas.'],
+['s','3.37',String.raw`-\ln(1-\alpha)=k\,t\qquad\frac{d\alpha}{dt}=k\,(1-\alpha)`,'Reacción interna total en un sólido muy poroso donde el reactivo penetra: no hay núcleo y la cinética es de primer orden. No es el caso del grano de oro denso.'],
+['s','Ej. 3.1',String.raw`\frac{t_c}{t_s}=\frac{1}{2}\left(\frac{4\pi}{3}\right)^{1/3}\approx 0.81`,'Para la misma masa y densidad, un cubo se disuelve en menos tiempo que una esfera con control por la interfaz, porque tiene más área por unidad de volumen.'],
+['s','',String.raw`k_s=k_{s,25}\exp\left[-\frac{E_s}{R}\left(\frac{1}{T}-\frac{1}{298}\right)\right]`,'Efecto de la temperatura sobre la reacción en la interfaz (Arrhenius referido a 25 °C).']]},
+p4:{t:'Ecuaciones: capa límite y transferencia de masa (cap. 5)',i:[
+['s','5.1',String.raw`J_{ix}=-D_i\frac{\partial C_i}{\partial x}+C_i\,v_x-E_D\frac{\partial C_i}{\partial x}`,'Flujo total de un soluto: difusión molecular + convección + difusión turbulenta (de remolino). En el seno de la pulpa dominan los dos últimos.'],
+['s','5.2 y 5.3',String.raw`(v_x)_{x=0}=0\qquad(E_D)_{x=0}=0`,'Pegado al grano el fluido no desliza y la turbulencia se anula: a través de la capa límite el transporte es solo por difusión.'],
+['k','5.4',String.raw`J=D\,\frac{C_s-C_o}{\delta}=h_m\,(C_s-C_o)\qquad h_m=\frac{D}{\delta}`,'Ley de Fick en la película con perfil lineal equivalente de espesor δ: la agitación no cambia D, adelgaza δ y por eso sube h<sub>m</sub>.'],
+['s','',String.raw`C(x)=C_o-(C_o-C_s)\,e^{-x/\delta}`,'Perfil de la figura: decae exponencialmente desde la superficie; δ queda definido por la tangente en x = 0 (Fig. 5.1). Para el O₂ y el CN⁻ en el oro, C<sub>s</sub> &lt; C<sub>o</sub> porque el reactivo se consume.'],
+['k','5.23',String.raw`R=\frac{2\,A\,D_{\text{CN}}\,D_{\text{O}_{2}}\,[\text{CN}]\,[\text{O}_{2}]}{\delta\left(D_{\text{CN}}[\text{CN}]+4\,D_{\text{O}_{2}}[\text{O}_{2}]\right)}`,'Ecuación de Elsner: velocidad de disolución del oro, limitada por la difusión simultánea de cianuro y de oxígeno hacia la superficie.'],
+['s','5.24 y 5.25',String.raw`R\approx\frac{A\,D_{\text{CN}}[\text{CN}]}{2\,\delta}\quad(\text{CN bajo})\qquad R\approx\frac{2\,A\,D_{\text{O}_{2}}[\text{O}_{2}]}{\delta}\quad(\text{CN alto})`,'Casos límite: con poco cianuro manda el CN⁻; con mucho, la velocidad depende del O₂ disuelto.'],
+['s','5.26',String.raw`\frac{[\text{CN}]}{[\text{O}_{2}]}=\frac{4\,D_{\text{O}_{2}}}{D_{\text{CN}}}\approx 6`,'Relación crítica en la que cambia el control, con D<sub>CN</sub> = 1,83×10⁻⁵ y D<sub>O₂</sub> = 2,76×10⁻⁵ cm²/s (experimentalmente entre 4,6 y 7,4).'],
+['s','5.52–5.54',String.raw`N_{Sh}=\frac{h_m\,d}{D}=\frac{d}{\delta}\qquad N_{Re}=\frac{v\,d}{\nu}\qquad N_{Sc}=\frac{\nu}{D}`,'Números de Sherwood, Reynolds y Schmidt: permiten estimar h<sub>m</sub> sin medir δ.'],
+['s','5.55',String.raw`N_{Sh}=2+C′\,N_{Re}^{m}\,N_{Sc}^{1/3}`,'Esfera en un fluido en movimiento (C = 2, C′ ≈ 0,6): con velocidad nula queda N<sub>Sh</sub> = 2, difusión pura hacia un medio infinito.'],
+['s','',String.raw`N_{Sh}=2+0.52\left(\frac{\varepsilon^{1/3}\,d^{4/3}}{\nu_p}\right)^{0.52}N_{Sc}^{1/3}\qquad \nu_p=\nu\left(1-\frac{\varphi}{0.62}\right)^{-1.55}`,'Correlación usada en el simulador: la agitación entra por la disipación de energía ε (ε ∝ rpm³) y la viscosidad de la pulpa crece con la fracción volumétrica de sólidos φ.'],
+['s','5.2.2',String.raw`\frac{1}{v}=\frac{1}{v_f}+\frac{1}{v_r}`,'Película (v<sub>f</sub>) y reacción superficial (v<sub>r</sub>) en serie, como resistencias: más agitación solo ayuda mientras manda la película. Esta forma en serie es la manera habitual de cuantificar el límite descrito en la §5.2.2.'],
+['s','5.12',String.raw`-\ln(1-\alpha)=k\,t\qquad k=\frac{D}{\delta}\frac{A}{V}=h_m\frac{A}{V}`,'Disolución con control por la película (A, δ y C<sub>s</sub> constantes): cinética de primer orden. Aplica a la oxigenación de cada tanque, donde el O₂ se aproxima a su valor de régimen como 1 − e<sup>−K<sub>L</sub>a·t</sup>.']]},
+p5:{t:'Ecuaciones: activación térmica y Arrhenius (cap. 1 y 6)',i:[
+['s','1.1',String.raw`G_A=E_A-T\,S_A`,'Energía libre de activación: la barrera de energía (E<sub>A</sub>) menos el aporte entrópico de la configuración de transición (S<sub>A</sub>).'],
+['s','',String.raw`\frac{N_{\geq E}}{N}=e^{-E/RT}`,'Fracción de moléculas con energía igual o mayor que la barrera (factor de Boltzmann): es lo que muestra la gráfica de la sección 1 y de donde sale la ley de Arrhenius.'],
+['s','1.3 y 1.4',String.raw`\frac{d\alpha}{dt}=A\,e^{-E/RT}\,f(\alpha)=k\,f(\alpha)`,'La velocidad separa el efecto de la temperatura (k) del efecto del avance de la reacción f(α). Por eso, si la velocidad se duplica al inicio, también se duplica a α = 0,5 mientras no cambie el mecanismo.'],
+['k','1.6',String.raw`k=A\,\exp\left(-\frac{E}{R\,T}\right)\quad\Rightarrow\quad\ln k=\ln A-\frac{E}{R}\cdot\frac{1}{T}`,'Ley de Arrhenius: una gráfica de ln k contra 1/T es una recta de pendiente −E/R. Con ella se calcula la energía de activación a partir de ensayos a distintas temperaturas.'],
+['s','1.7',String.raw`k\propto T^{m}\exp\left(-\frac{E}{R\,T}\right)\qquad 0<m<1`,'Las teorías de colisiones y del estado de transición predicen un factor T<sup>m</sup>, pero el exponencial es mucho más sensible a la temperatura y por eso se desprecia (solo importa si E es muy pequeña).'],
+['s','',String.raw`\frac{d(\ln k)}{dT}=\frac{E}{R\,T^{2}}`,'Sensibilidad de la velocidad a la temperatura: es mayor cuanto mayor es E y cuanto menor es T.'],
+['k','Ej. 1.1',String.raw`\ln\frac{k_2}{k_1}=\frac{E}{R}\left(\frac{1}{T_1}-\frac{1}{T_2}\right)\qquad\ln 2=\frac{E}{R}\,\frac{\Delta T}{T_1\,T_2}`,'Con la velocidad a dos temperaturas se obtiene E; y con E se obtiene cuántos grados hay que subir para duplicar la velocidad (tabla de la sección 6).'],
+['s','',String.raw`\frac{1}{k_{\text{ef}}}=\frac{1}{k_f}+\frac{1}{k_r}+\frac{1}{k_a}`,'Etapas en serie (película, reacción y matriz): controla la más lenta, y al subir T pasa a controlar la de menor energía de activación (cap. 6.4).'],
+['s','',String.raw`\bar{k}=\frac{1}{2\pi}\int k\,(T_0+\Delta T\sin\theta)\,d\theta\;\geq\;k(T_0)`,'Variaciones periódicas de temperatura: como la función exponencial es convexa, la velocidad media con fluctuaciones es algo mayor que la de la temperatura media (pregunta 1.i del capítulo).'],
+['n','','','Energías de activación usadas: película ≈ 15–25 kJ/mol, reacción superficial 30 kJ/mol (dato de entrada) y matriz 20 kJ/mol (dato de entrada).']]}};
+function buildEq(){document.querySelectorAll('.eqhost').forEach(h=>{const q=EQ[h.dataset.k];
+ h.innerHTML='<details class="eqs" open><summary>'+q.t+'</summary>'+q.i.map(([ty,num,tx,te])=>{
+  if(ty==='n')return`<div class="st"><p class="lead">${te}</p></div>`;
+  const eq=`<div class="ey"><div class="m">${tex(tx)}</div></div>`;
+  if(ty==='k')return`<div class="ke">${eq}<div class="cap">${num?'<b>Ec. '+num+'.</b> ':''}${te}</div></div>`;
+  return`<div class="st"><p class="lead">${te}</p>${eq}${num?'<div class="en">('+num+')</div>':''}</div>`}).join('')+'</details>'})}
+buildEq();
+window.onresize=()=>render(RES,1);
+buildPre();parsePts();live();
+</script>
+</body>
+</html>
